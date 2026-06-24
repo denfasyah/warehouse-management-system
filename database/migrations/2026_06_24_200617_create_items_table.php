@@ -13,8 +13,9 @@ return new class extends Migration
             $table->foreignId('category_id')->constrained('categories')->restrictOnDelete();
             $table->foreignId('location_id')->nullable()->constrained('locations')->nullOnDelete();
             $table->string('name');
+            $table->string('slug')->unique()->nullable();               // slug untuk URL (nullable for migration safety)
             $table->string('sku', 50)->unique();          // kode unik sistem
-            $table->string('barcode', 100)->unique();      // nilai barcode Code128
+            $table->string('barcode', 100)->unique()->nullable();      // nilai barcode Code128 (nullable, auto-generated)
             $table->string('barcode_image')->nullable();   // path file PNG di storage
             $table->string('unit', 20)->default('pcs');    // pcs, box, kg, liter, dll
             $table->unsignedInteger('stock')->default(0);

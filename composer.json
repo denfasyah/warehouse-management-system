@@ -10,6 +10,7 @@
         "barryvdh/laravel-dompdf": "^3.1",
         "laravel/framework": "^13.8",
         "laravel/tinker": "^3.0",
+        "milon/barcode": "^13.1",
         "picqer/php-barcode-generator": "^3.2"
     },
     "require-dev": {

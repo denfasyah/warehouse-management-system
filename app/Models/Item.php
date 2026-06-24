@@ -14,6 +14,7 @@ class Item extends Model
         'category_id',
         'location_id',
         'name',
+        'slug',
         'sku',
         'barcode',
         'barcode_image',
@@ -24,6 +25,14 @@ class Item extends Model
         'frequency_score',
         'description',
     ];
+
+    /**
+     * Gunakan slug sebagai route key (bukan id)
+     */
+    public function getRouteKeyName(): string
+    {
+        return 'slug';
+    }
 
     // ─── Relationships ───────────────────────────────────────
 
@@ -120,6 +129,21 @@ class Item extends Model
         } while (static::where('sku', $sku)->exists());
 
         return $sku;
+    }
+
+    /**
+     * Generate slug unik dari nama barang
+     */
+    public static function generateSlug(string $name, ?int $ignoreId = null): string
+    {
+        $slug = \Illuminate\Support\Str::slug($name);
+        $originalSlug = $slug;
+        $count = 1;
+        while (static::where('slug', $slug)->when($ignoreId, fn($q) => $q->where('id', '!=', $ignoreId))->exists()) {
+            $slug = $originalSlug . '-' . $count;
+            $count++;
+        }
+        return $slug;
     }
 
     /**

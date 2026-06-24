@@ -163,9 +163,10 @@
         <!-- TopAppBar Partial -->
         @include('partials.topbar')
 
-        <div class="p-4 md:p-5 space-y-4">
+        <main class="flex-1 p-4 md:p-6 overflow-x-hidden">
+            <x-alert />
             @yield('content')
-        </div>
+        </main>
     </main>
 </body>
 </html>

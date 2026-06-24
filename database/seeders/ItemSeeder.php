@@ -6,6 +6,7 @@ use App\Models\Category;
 use App\Models\Item;
 use App\Models\Location;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Str;
 
 class ItemSeeder extends Seeder
 {
@@ -45,6 +46,7 @@ class ItemSeeder extends Seeder
                 'category_id' => $cat->id,
                 'location_id' => $loc->id,
                 'name' => $name,
+                'slug' => Str::slug($name),
                 'sku' => Item::generateSku($cat->code),
                 'barcode' => Item::generateBarcode(),
                 'unit' => 'pcs',

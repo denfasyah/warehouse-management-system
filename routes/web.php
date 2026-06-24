@@ -16,6 +16,16 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::get('/', function () {
         return view('admin.dashboard');
     })->name('dashboard');
+
+    // Master Data
+    Route::resource('categories', \App\Http\Controllers\Admin\CategoryController::class)->except(['create', 'show', 'edit']);
+    Route::resource('locations', \App\Http\Controllers\Admin\LocationController::class)->except(['create', 'show', 'edit']);
+    Route::resource('users', \App\Http\Controllers\Admin\UserController::class)->except(['create', 'show', 'edit']);
+    
+    // Items & Barcode
+    Route::get('items/export', [\App\Http\Controllers\Admin\ItemController::class, 'exportCsv'])->name('items.export');
+    Route::resource('items', \App\Http\Controllers\Admin\ItemController::class)->except(['show']);
+    Route::get('items/{item}/barcode', [\App\Http\Controllers\Admin\BarcodeController::class, 'print'])->name('barcode.print');
 });
 
 // PETUGAS ROUTES
