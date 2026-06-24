@@ -100,7 +100,12 @@ class ItemController extends Controller
 
         $callback = function() use($items, $columns) {
             $file = fopen('php://output', 'w');
-            fputcsv($file, $columns);
+            
+            // Tambahkan BOM (Byte Order Mark) untuk UTF-8 agar Excel membaca karakter khusus dengan benar
+            fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
+            
+            // Gunakan separator titik koma (;) agar lebih kompatibel dengan Excel di region Indonesia/Eropa
+            fputcsv($file, $columns, ';');
 
             foreach ($items as $item) {
                 $row['Nama Barang'] = $item->name;
@@ -113,7 +118,7 @@ class ItemController extends Controller
                 $row['Min Stok']    = $item->min_stock;
                 $row['Kelas CBS']   = strtoupper($item->storage_class);
 
-                fputcsv($file, array($row['Nama Barang'], $row['Kategori'], $row['SKU'], $row['Barcode'], $row['Lokasi/Rak'], $row['Stok'], $row['Satuan'], $row['Min Stok'], $row['Kelas CBS']));
+                fputcsv($file, array($row['Nama Barang'], $row['Kategori'], $row['SKU'], $row['Barcode'], $row['Lokasi/Rak'], $row['Stok'], $row['Satuan'], $row['Min Stok'], $row['Kelas CBS']), ';');
             }
 
             fclose($file);
