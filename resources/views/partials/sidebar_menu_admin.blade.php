@@ -45,20 +45,22 @@
 </div>
 
 {{-- === PERSETUJUAN === --}}
-<div x-data="{ open: false }" class="mt-1">
+<div x-data="{ open: {{ request()->routeIs('admin.approvals.*') ? 'true' : 'false' }} }" class="mt-1">
     <button @click="open = !open" class="w-full flex items-center gap-2.5 px-3 py-2 text-white/60 hover:bg-white/5 hover:text-white rounded-lg text-sm transition-all group">
         <span class="material-symbols-outlined text-[18px]">approval</span>
         <span class="flex-1 text-left">Persetujuan</span>
         {{-- Badge notifikasi --}}
-        <span class="ml-auto mr-1 bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full leading-none">3</span>
+        @php
+            $pendingCount = \App\Models\OutgoingGood::where('status', 'pending')->count();
+        @endphp
+        @if($pendingCount > 0)
+            <span class="ml-auto mr-1 bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full leading-none">{{ $pendingCount }}</span>
+        @endif
         <span class="material-symbols-outlined text-[15px] opacity-50 transition-transform duration-200" :class="open ? 'rotate-90' : ''">chevron_right</span>
     </button>
-    <div x-show="open" x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 -translate-y-1" x-transition:enter-end="opacity-100 translate-y-0" style="display:none;" class="mt-0.5 ml-3 pl-3 border-l border-white/10 space-y-0.5">
-        <a href="#" class="flex items-center gap-2 px-2.5 py-1.5 text-white/65 hover:text-white hover:bg-white/8 rounded-md text-[13px] transition-all font-medium">
+    <div x-show="open" x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 -translate-y-1" x-transition:enter-end="opacity-100 translate-y-0" style="display: {{ request()->routeIs('admin.approvals.*') ? 'block' : 'none' }};" class="mt-0.5 ml-3 pl-3 border-l border-white/10 space-y-0.5">
+        <a href="{{ route('admin.approvals.index') }}" class="flex items-center gap-2 px-2.5 py-1.5 {{ request()->routeIs('admin.approvals.*') ? 'text-white bg-white/10 font-semibold' : 'text-white/65 hover:text-white hover:bg-white/8 font-medium' }} rounded-md text-[13px] transition-all">
             <span class="material-symbols-outlined text-[16px]">task_alt</span> Approval Barang Keluar
-        </a>
-        <a href="#" class="flex items-center gap-2 px-2.5 py-1.5 text-white/65 hover:text-white hover:bg-white/8 rounded-md text-[13px] transition-all font-medium">
-            <span class="material-symbols-outlined text-[16px]">history</span> Riwayat Persetujuan
         </a>
     </div>
 </div>

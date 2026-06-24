@@ -19,10 +19,68 @@
         </button>
 
         <!-- Notifications -->
-        <button class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-container transition-colors relative group">
-            <span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors">notifications</span>
-            <span class="absolute top-2 right-2 w-2 h-2 bg-error rounded-full border-2 border-surface-container-lowest"></span>
-        </button>
+        <div x-data="{ notifOpen: false, notifCount: {{ auth()->user() ? auth()->user()->unreadNotifications->count() : 0 }} }" 
+             x-init="setInterval(() => { fetch('{{ route('notifications.unreadCount') }}').then(r => r.json()).then(d => { notifCount = d.count; }) }, 15000)" 
+             class="relative">
+             
+            <button @click="notifOpen = !notifOpen" @click.outside="notifOpen = false" class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-container transition-colors relative group">
+                <span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors">notifications</span>
+                
+                <span x-show="notifCount > 0" x-text="notifCount > 99 ? '99+' : notifCount" style="display: none;" class="absolute -top-1 -right-1 bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full leading-none border-2 border-surface-container-lowest shadow-sm"></span>
+            </button>
+            
+            <div x-show="notifOpen" x-transition:enter="transition ease-out duration-100" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100" x-transition:leave="transition ease-in duration-75" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95" style="display: none;" class="absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-xl border border-gray-100 py-2 z-50 overflow-hidden">
+                <div class="px-4 py-3 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+                    <h3 class="font-bold text-sm text-gray-800">Notifikasi</h3>
+                    <template x-if="notifCount > 0">
+                        <form action="{{ route('notifications.readAll') }}" method="POST">
+                            @csrf
+                            <button type="submit" class="text-[11px] text-primary hover:underline font-semibold">Tandai semua dibaca</button>
+                        </form>
+                    </template>
+                </div>
+                <div class="max-h-[300px] overflow-y-auto divide-y divide-gray-50">
+                    @if(auth()->user() && auth()->user()->notifications->count() > 0)
+                        @foreach(auth()->user()->unreadNotifications->take(5) as $notification)
+                            @php
+                                $isApproved = $notification->type === 'approved';
+                                $data = is_array($notification->data) ? $notification->data : json_decode($notification->data, true);
+                            @endphp
+                            <div class="px-4 py-3 hover:bg-gray-50 transition-colors {{ $notification->read_at ? 'opacity-60' : 'bg-primary/5' }}">
+                                <div class="flex gap-3">
+                                    <div class="flex-shrink-0 mt-0.5">
+                                        @if($isApproved)
+                                            <span class="material-symbols-outlined text-green-500 text-[20px]">check_circle</span>
+                                        @elseif($notification->type === 'rejected')
+                                            <span class="material-symbols-outlined text-red-500 text-[20px]">cancel</span>
+                                        @else
+                                            <span class="material-symbols-outlined text-amber-500 text-[20px]">notifications</span>
+                                        @endif
+                                    </div>
+                                    <div>
+                                        <p class="text-sm text-gray-800 {{ $notification->read_at ? '' : 'font-semibold' }}">
+                                            {{ $notification->message ?? 'Notifikasi baru' }}
+                                        </p>
+                                        @if(isset($data['reject_reason']) && $data['reject_reason'])
+                                            <p class="text-xs text-red-600 mt-1">"{{ $data['reject_reason'] }}"</p>
+                                        @endif
+                                        <p class="text-[10px] text-gray-400 mt-1.5">{{ $notification->created_at->diffForHumans() }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        @endforeach
+                    @else
+                        <div class="px-4 py-8 text-center">
+                            <span class="material-symbols-outlined text-gray-300 text-3xl mb-2">notifications_paused</span>
+                            <p class="text-xs text-gray-500">Belum ada notifikasi baru.</p>
+                        </div>
+                    @endif
+                </div>
+                <div class="border-t border-gray-100 p-2 text-center bg-gray-50/50">
+                    <a href="{{ route('notifications.index') }}" class="text-xs text-primary font-bold hover:underline">Lihat Semua Notifikasi</a>
+                </div>
+            </div>
+        </div>
         
         <!-- Divider -->
         <div class="h-8 w-[1px] bg-outline-variant/50 hidden md:block mx-1"></div>
