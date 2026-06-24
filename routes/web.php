@@ -33,4 +33,15 @@ Route::middleware(['auth', 'role:petugas'])->prefix('petugas')->name('petugas.')
     Route::get('/', function () {
         return view('petugas.dashboard');
     })->name('dashboard');
+
+    // Inbound (Barang Masuk)
+    Route::get('incoming/search', [\App\Http\Controllers\Petugas\IncomingGoodController::class, 'search'])->name('incoming.search');
+    Route::resource('incoming', \App\Http\Controllers\Petugas\IncomingGoodController::class)->only(['index', 'create', 'store']);
+
+    // Scanner
+    Route::get('scanner', [\App\Http\Controllers\Petugas\ScannerController::class, 'index'])->name('scanner.index');
+    Route::get('scanner/api', [\App\Http\Controllers\Petugas\ScannerController::class, 'scan'])->name('scanner.api');
+
+    // Outbound (Barang Keluar)
+    Route::resource('outgoing', \App\Http\Controllers\Petugas\OutgoingGoodController::class)->only(['index', 'create', 'store']);
 });

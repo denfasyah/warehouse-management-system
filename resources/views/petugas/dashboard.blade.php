@@ -3,54 +3,7 @@
 @section('role', 'PETUGAS GUDANG')
 
 @section('sidebar')
-{{-- === DASHBOARD === --}}
-<a href="#" class="flex items-center gap-2.5 px-3 py-2 bg-white/10 text-white rounded-lg font-semibold text-sm">
-    <span class="material-symbols-outlined text-[18px]" style="font-variation-settings: 'FILL' 1;">dashboard</span>
-    <span>Dashboard</span>
-</a>
-
-{{-- === TRANSAKSI === --}}
-<div x-data="{ open: true }" class="mt-1">
-    <button @click="open = !open" class="w-full flex items-center gap-2.5 px-3 py-2 text-white/60 hover:bg-white/5 hover:text-white rounded-lg text-sm transition-all">
-        <span class="material-symbols-outlined text-[18px]">swap_horiz</span>
-        <span class="flex-1 text-left">Transaksi</span>
-        <span class="material-symbols-outlined text-[15px] opacity-50 transition-transform duration-200" :class="open ? 'rotate-90' : ''">chevron_right</span>
-    </button>
-    <div x-show="open" x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 -translate-y-1" x-transition:enter-end="opacity-100 translate-y-0" class="mt-0.5 ml-3 pl-3 border-l border-white/10 space-y-0.5">
-        <a href="#" class="flex items-center gap-2 px-2.5 py-1.5 text-white/65 hover:text-white hover:bg-white/8 rounded-md text-[13px] transition-all font-medium">
-            <span class="material-symbols-outlined text-[16px]">move_to_inbox</span> Barang Masuk
-        </a>
-        <a href="#" class="flex items-center gap-2 px-2.5 py-1.5 text-white/65 hover:text-white hover:bg-white/8 rounded-md text-[13px] transition-all font-medium">
-            <span class="material-symbols-outlined text-[16px]">outbox</span> Barang Keluar
-        </a>
-        <a href="#" class="flex items-center gap-2 px-2.5 py-1.5 text-white/65 hover:text-white hover:bg-white/8 rounded-md text-[13px] transition-all font-medium">
-            <span class="material-symbols-outlined text-[16px]">qr_code_scanner</span> Scan Barcode
-        </a>
-    </div>
-</div>
-
-{{-- === STORAGE === --}}
-<div x-data="{ open: false }" class="mt-1">
-    <button @click="open = !open" class="w-full flex items-center gap-2.5 px-3 py-2 text-white/60 hover:bg-white/5 hover:text-white rounded-lg text-sm transition-all">
-        <span class="material-symbols-outlined text-[18px]">shelves</span>
-        <span class="flex-1 text-left">Storage</span>
-        <span class="material-symbols-outlined text-[15px] opacity-50 transition-transform duration-200" :class="open ? 'rotate-90' : ''">chevron_right</span>
-    </button>
-    <div x-show="open" x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 -translate-y-1" x-transition:enter-end="opacity-100 translate-y-0" style="display:none;" class="mt-0.5 ml-3 pl-3 border-l border-white/10 space-y-0.5">
-        <a href="#" class="flex items-center gap-2 px-2.5 py-1.5 text-white/65 hover:text-white hover:bg-white/8 rounded-md text-[13px] transition-all font-medium">
-            <span class="material-symbols-outlined text-[16px]">location_on</span> Lokasi Penyimpanan
-        </a>
-        <a href="#" class="flex items-center gap-2 px-2.5 py-1.5 text-white/65 hover:text-white hover:bg-white/8 rounded-md text-[13px] transition-all font-medium">
-            <span class="material-symbols-outlined text-[16px]">move_item</span> Penataan Barang
-        </a>
-    </div>
-</div>
-
-{{-- === RIWAYAT AKTIVITAS === --}}
-<a href="#" class="mt-1 flex items-center gap-2.5 px-3 py-2 text-white/60 hover:bg-white/5 hover:text-white rounded-lg text-sm transition-all">
-    <span class="material-symbols-outlined text-[18px]">history</span>
-    <span>Riwayat Aktivitas</span>
-</a>
+    @include('partials.sidebar_menu_petugas')
 @endsection
 
 @section('content')
@@ -113,27 +66,27 @@
         <h3 class="text-base font-semibold text-gray-800">Aksi Cepat</h3>
     </div>
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <button class="bg-primary text-white p-5 rounded-xl flex flex-col items-center justify-center gap-2.5 hover:opacity-90 transition-all hover:shadow-md group text-center">
+        <a href="{{ route('petugas.scanner.index') }}" class="bg-primary text-white p-5 rounded-xl flex flex-col items-center justify-center gap-2.5 hover:opacity-90 transition-all hover:shadow-md group text-center">
             <span class="material-symbols-outlined text-3xl group-hover:scale-110 transition-transform">qr_code_scanner</span>
             <div>
                 <div class="font-semibold text-sm">Scan Barcode</div>
                 <div class="text-xs opacity-70 mt-0.5">Gunakan kamera/scanner</div>
             </div>
-        </button>
-        <button class="glass-card p-5 rounded-xl flex flex-col items-center justify-center gap-2.5 hover:border-primary/50 hover:shadow-sm transition-all group text-center">
+        </a>
+        <a href="{{ route('petugas.incoming.create') }}" class="glass-card p-5 rounded-xl flex flex-col items-center justify-center gap-2.5 hover:border-primary/50 hover:shadow-sm transition-all group text-center">
             <span class="material-symbols-outlined text-3xl text-primary group-hover:-translate-y-0.5 transition-transform">playlist_add</span>
             <div>
                 <div class="font-semibold text-sm text-gray-800">Barang Masuk</div>
                 <div class="text-xs text-gray-400 mt-0.5">Penerimaan stok baru</div>
             </div>
-        </button>
-        <button class="glass-card p-5 rounded-xl flex flex-col items-center justify-center gap-2.5 hover:border-primary/50 hover:shadow-sm transition-all group text-center">
+        </a>
+        <a href="{{ route('petugas.outgoing.create') }}" class="glass-card p-5 rounded-xl flex flex-col items-center justify-center gap-2.5 hover:border-primary/50 hover:shadow-sm transition-all group text-center">
             <span class="material-symbols-outlined text-3xl text-primary group-hover:-translate-y-0.5 transition-transform">local_shipping</span>
             <div>
                 <div class="font-semibold text-sm text-gray-800">Barang Keluar</div>
                 <div class="text-xs text-gray-400 mt-0.5">Pengiriman & Distribusi</div>
             </div>
-        </button>
+        </a>
     </div>
 </div>
 
