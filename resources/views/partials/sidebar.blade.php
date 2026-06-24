@@ -23,21 +23,54 @@
         </div>
         
         <!-- Navigation -->
-        <nav class="flex-1 space-y-1 overflow-y-auto custom-scrollbar px-2 md:px-0">
-            @yield('sidebar')
-        </nav>
+        <div class="flex-1 overflow-hidden relative">
+            <nav class="sidebar-nav sidebar-fade h-full overflow-y-auto pr-1 space-y-0.5 pb-6">
+                @yield('sidebar')
+            </nav>
+        </div>
         
         <!-- User Profile Area (Bottom Sidebar) -->
-        <div class="mt-6 px-2 pt-4 border-t border-white/10">
+        <div class="mt-6 px-2 pt-4 border-t border-white/10 relative group">
             <div class="flex items-center gap-3">
                 <div class="w-9 h-9 rounded-full bg-surface-container-high flex-shrink-0 border border-white/20">
-                    <img class="w-full h-full rounded-full object-cover" src="https://ui-avatars.com/api/?name=User&background=random" alt="Profile">
+                    <img class="w-full h-full rounded-full object-cover" src="https://ui-avatars.com/api/?name={{ urlencode(auth()->user()->name ?? 'User') }}&background=random" alt="Profile">
                 </div>
-                <div class="overflow-hidden">
-                    <p class="text-sm font-semibold truncate text-white">User Name</p>
-                    <p class="text-[10px] opacity-70 truncate">user@indoone.com</p>
+                <div class="overflow-hidden flex-1">
+                    <p class="text-sm font-semibold truncate text-white">{{ auth()->user()->name ?? 'User Name' }}</p>
+                    <p class="text-[10px] opacity-70 truncate">{{ auth()->user()->email ?? 'user@indoone.com' }}</p>
                 </div>
+                <form id="logout-form-sidebar" action="{{ route('logout') }}" method="POST" class="ml-auto">
+                    @csrf
+                    <button type="button" onclick="confirmLogout('logout-form-sidebar')" class="w-8 h-8 rounded hover:bg-white/10 flex items-center justify-center text-white/70 hover:text-white transition-colors" title="Logout">
+                        <span class="material-symbols-outlined text-[20px]">logout</span>
+                    </button>
+                </form>
             </div>
         </div>
     </aside>
 </div>
+
+<script>
+    function confirmLogout(formId) {
+        Swal.fire({
+            title: 'Keluar dari Sistem?',
+            text: "Sesi Anda akan diakhiri dan harus login kembali.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#181c61',
+            cancelButtonColor: '#e0e3e5',
+            confirmButtonText: 'Ya, Keluar',
+            cancelButtonText: '<span class="text-gray-700">Batal</span>',
+            customClass: {
+                popup: 'rounded-2xl shadow-xl border border-gray-100',
+                title: 'font-headline-md text-gray-800',
+                confirmButton: 'rounded-lg px-6',
+                cancelButton: 'rounded-lg px-6'
+            }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                document.getElementById(formId).submit();
+            }
+        })
+    }
+</script>

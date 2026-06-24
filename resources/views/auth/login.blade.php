@@ -153,14 +153,18 @@
             <p class="font-body-md text-body-md text-on-surface-variant">Silakan masuk ke akun Anda untuk melanjutkan operasional.</p>
         </div>
         <!-- Login Form -->
-        <form class="space-y-6" onsubmit="return false">
+        <form class="space-y-6" action="{{ route('login') }}" method="POST">
+            @csrf
             <!-- Username Field -->
             <div class="space-y-2">
-                <label class="block font-label-md text-label-md text-on-surface-variant uppercase tracking-wider" for="username">Username / Email</label>
+                <label class="block font-label-md text-label-md text-on-surface-variant uppercase tracking-wider" for="email">Email</label>
                 <div class="relative">
-                    <span class="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-outline" data-icon="person">person</span>
-                    <input class="w-full pl-12 pr-4 py-3 bg-surface border border-outline-variant rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-all font-body-md text-body-md text-on-surface outline-none" id="username" name="username" placeholder="Masukkan username Anda" type="text">
+                    <span class="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-outline" data-icon="email">email</span>
+                    <input class="w-full pl-12 pr-4 py-3 bg-surface border border-outline-variant rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-all font-body-md text-body-md text-on-surface outline-none @error('email') border-red-500 @enderror" id="email" name="email" placeholder="Masukkan email Anda" type="email" value="{{ old('email') }}" required autofocus>
                 </div>
+                @error('email')
+                    <p class="text-sm text-red-500 mt-1">{{ $message }}</p>
+                @enderror
             </div>
             <!-- Password Field -->
             <div class="space-y-2">
@@ -170,15 +174,18 @@
                 </div>
                 <div class="relative">
                     <span class="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-outline" data-icon="lock">lock</span>
-                    <input class="w-full pl-12 pr-12 py-3 bg-surface border border-outline-variant rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-all font-body-md text-body-md text-on-surface outline-none" id="password" name="password" placeholder="••••••••" type="password">
+                    <input class="w-full pl-12 pr-12 py-3 bg-surface border border-outline-variant rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-all font-body-md text-body-md text-on-surface outline-none @error('password') border-red-500 @enderror" id="password" name="password" placeholder="••••••••" type="password" required>
                     <button class="absolute right-4 top-1/2 -translate-y-1/2 text-outline hover:text-primary transition-colors" type="button" onclick="const p=document.getElementById('password'); p.type=p.type==='password'?'text':'password'; this.querySelector('span').textContent=p.type==='password'?'visibility':'visibility_off';">
                         <span class="material-symbols-outlined" data-icon="visibility">visibility</span>
                     </button>
                 </div>
+                @error('password')
+                    <p class="text-sm text-red-500 mt-1">{{ $message }}</p>
+                @enderror
             </div>
             <!-- Remember Me -->
             <div class="flex items-center">
-                <input class="w-4 h-4 text-primary bg-surface border-outline-variant rounded focus:ring-primary" id="remember" type="checkbox">
+                <input class="w-4 h-4 text-primary bg-surface border-outline-variant rounded focus:ring-primary" id="remember" name="remember" type="checkbox">
                 <label class="ml-2 font-body-md text-body-md text-on-surface-variant select-none" for="remember">Ingat saya di perangkat ini</label>
             </div>
             <!-- Submit Button -->

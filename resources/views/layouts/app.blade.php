@@ -123,9 +123,36 @@
             50% { transform: translateY(-10px); }
             100% { transform: translateY(0px); }
         }
+
+        /* Custom sidebar scrollbar */
+        .sidebar-nav::-webkit-scrollbar {
+            width: 3px;
+        }
+        .sidebar-nav::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .sidebar-nav::-webkit-scrollbar-thumb {
+            background: rgba(255,255,255,0.15);
+            border-radius: 99px;
+        }
+        .sidebar-nav::-webkit-scrollbar-thumb:hover {
+            background: rgba(255,255,255,0.3);
+        }
+        /* Firefox */
+        .sidebar-nav {
+            scrollbar-width: thin;
+            scrollbar-color: rgba(255,255,255,0.15) transparent;
+        }
+
+        /* Sidebar fade mask at bottom when scrollable */
+        .sidebar-fade {
+            mask-image: linear-gradient(to bottom, black calc(100% - 40px), transparent 100%);
+            -webkit-mask-image: linear-gradient(to bottom, black calc(100% - 40px), transparent 100%);
+        }
     </style>
     <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body x-data="{ sidebarOpen: false }" class="text-on-background bg-surface-container-lowest antialiased">
     <!-- SideNavBar Partial -->

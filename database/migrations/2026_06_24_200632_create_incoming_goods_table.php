@@ -6,20 +6,20 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('incoming_goods', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('item_id')->constrained('items')->restrictOnDelete();
+            $table->foreignId('user_id')->constrained('users')->restrictOnDelete(); // petugas yg input
+            $table->foreignId('location_id')->constrained('locations')->restrictOnDelete(); // lokasi penempatan
+            $table->unsignedInteger('quantity');
+            $table->text('note')->nullable();
+            $table->timestamp('received_at')->useCurrent();
             $table->timestamps();
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('incoming_goods');

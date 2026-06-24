@@ -6,20 +6,26 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('items', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('category_id')->constrained('categories')->restrictOnDelete();
+            $table->foreignId('location_id')->nullable()->constrained('locations')->nullOnDelete();
+            $table->string('name');
+            $table->string('sku', 50)->unique();          // kode unik sistem
+            $table->string('barcode', 100)->unique();      // nilai barcode Code128
+            $table->string('barcode_image')->nullable();   // path file PNG di storage
+            $table->string('unit', 20)->default('pcs');    // pcs, box, kg, liter, dll
+            $table->unsignedInteger('stock')->default(0);
+            $table->unsignedInteger('min_stock')->default(5); // ambang batas stok rendah
+            $table->enum('storage_class', ['fast', 'medium', 'slow', 'unclassified'])->default('unclassified');
+            $table->unsignedInteger('frequency_score')->default(0); // total keluar 30 hari (diisi CBS engine)
+            $table->text('description')->nullable();
             $table->timestamps();
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('items');
