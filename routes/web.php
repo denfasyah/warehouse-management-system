@@ -21,7 +21,8 @@ Route::middleware('auth')->group(function () {
 // ADMIN ROUTES
 Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/dashboard', function () {
-        return view('admin.dashboard');
+        $stats = \App\Services\CBSService::getDashboardStats();
+        return view('admin.dashboard', compact('stats'));
     })->name('dashboard');
 
     // Master Data
@@ -45,13 +46,59 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     
     Route::get('cbs/classification', [\App\Http\Controllers\Admin\CBSController::class, 'classification'])->name('cbs.classification');
     Route::post('cbs/recalculate', [\App\Http\Controllers\Admin\CBSController::class, 'recalculate'])->name('cbs.recalculate');
+    Route::post('cbs/generate-relocation', [\App\Http\Controllers\Admin\CBSController::class, 'generateRelocationTasks'])->name('cbs.generateRelocation');
     Route::get('cbs/mapping', [\App\Http\Controllers\Admin\CBSController::class, 'mapping'])->name('cbs.mapping');
+    Route::get('cbs/relocation-tasks', [\App\Http\Controllers\Admin\CBSController::class, 'relocationTasks'])->name('cbs.relocationTasks');
+    Route::post('cbs/relocation-tasks/{task}/cancel', [\App\Http\Controllers\Admin\CBSController::class, 'cancelTask'])->name('cbs.cancelTask');
 });
 
 // PETUGAS ROUTES
 Route::middleware(['auth', 'role:petugas'])->prefix('petugas')->name('petugas.')->group(function () {
     Route::get('/', function () {
-        return view('petugas.dashboard');
+        $stats = \App\Services\CBSService::getDashboardStats();
+        
+        // Ambil riwayat aktivitas terbaru dari Petugas ini
+        $recentIncomings = \App\Models\IncomingGood::with('item', 'location')
+            ->where('user_id', auth()->id())
+            ->latest()
+            ->limit(5)
+            ->get()
+            ->map(function($inc) {
+                return [
+                    'time' => $inc->created_at->format('H:i'),
+                    'act' => 'Barang Masuk',
+                    'item' => $inc->item->name,
+                    'loc' => $inc->location ? $inc->location->code : '-',
+                    'status' => 'Berhasil',
+                    'ok' => true,
+                    'created_at' => $inc->created_at
+                ];
+            });
+
+        $recentOutgoings = \App\Models\OutgoingGood::with('item', 'location')
+            ->where('requested_by', auth()->id())
+            ->latest()
+            ->limit(5)
+            ->get()
+            ->map(function($out) {
+                $statusLabel = $out->status == 'approved' ? 'Berhasil' : ($out->status == 'rejected' ? 'Ditolak' : 'Pending');
+                $ok = $out->status == 'approved';
+                return [
+                    'time' => $out->created_at->format('H:i'),
+                    'act' => 'Barang Keluar',
+                    'item' => $out->item->name,
+                    'loc' => $out->location ? $out->location->code : '-',
+                    'status' => $statusLabel,
+                    'ok' => $ok,
+                    'created_at' => $out->created_at
+                ];
+            });
+
+        $activities = $recentIncomings->concat($recentOutgoings)
+            ->sortByDesc('created_at')
+            ->take(5);
+
+        return view('petugas.dashboard', compact('stats', 'activities'));
     })->name('dashboard');
 
     // Inbound (Barang Masuk)
@@ -64,4 +111,12 @@ Route::middleware(['auth', 'role:petugas'])->prefix('petugas')->name('petugas.')
 
     // Outbound (Barang Keluar)
     Route::resource('outgoing', \App\Http\Controllers\Petugas\OutgoingGoodController::class)->only(['index', 'create', 'store']);
+
+    // CBS untuk Petugas (Storage)
+    Route::get('cbs/locations', [\App\Http\Controllers\Petugas\CBSController::class, 'locations'])->name('cbs.locations');
+    Route::get('cbs/arrangement', [\App\Http\Controllers\Petugas\CBSController::class, 'arrangement'])->name('cbs.arrangement');
+
+    // Tugas Relokasi untuk Petugas
+    Route::get('relocation-tasks', [\App\Http\Controllers\Petugas\RelocationTaskController::class, 'index'])->name('relocationTasks.index');
+    Route::post('relocation-tasks/{task}/complete', [\App\Http\Controllers\Petugas\RelocationTaskController::class, 'complete'])->name('relocationTasks.complete');
 });

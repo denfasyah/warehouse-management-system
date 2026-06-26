@@ -25,6 +25,9 @@ class SettingController extends Controller
             Setting::where('key', $key)->update(['value' => $value]);
         }
 
-        return redirect()->route('admin.settings.index')->with('success', 'Pengaturan berhasil diperbarui.');
+        // Jalankan rekalkulasi otomatis setiap kali setting diupdate
+        \App\Services\CBSService::recalculateAll();
+
+        return redirect()->route('admin.settings.index')->with('success', 'Pengaturan berhasil diperbarui dan klasifikasi CBS telah dihitung ulang.');
     }
 }

@@ -77,6 +77,9 @@ class IncomingGoodController extends Controller
 
             DB::commit();
 
+            // Hitung ulang CBS untuk item ini (meskipun incoming tidak pengaruhi score, memastikan up-to-date)
+            \App\Services\CBSService::recalculate($item);
+
             return redirect()->route('petugas.incoming.index')->with('success', 'Barang masuk berhasil dicatat dan stok ditambahkan.');
 
         } catch (\Exception $e) {

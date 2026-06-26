@@ -10,7 +10,7 @@
 {{-- Welcome Banner --}}
 <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 mb-5">
     <div>
-        <h2 class="text-xl font-bold text-gray-800 tracking-tight">Halo, Budi! 👋</h2>
+        <h2 class="text-xl font-bold text-gray-800 tracking-tight">Halo, {{ auth()->user()->name }}! 👋</h2>
         <p class="text-sm text-gray-500 mt-0.5">Sesi aktif di Gudang Sektor B-4 sedang berjalan.</p>
     </div>
     <div class="px-3 py-1.5 bg-green-50 text-green-700 border border-green-200 rounded-full flex items-center gap-1.5 text-xs font-semibold self-start sm:self-auto">
@@ -21,11 +21,11 @@
 
 {{-- Stats --}}
 <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-5">
-    <div class="glass-card p-4 rounded-xl flex justify-between items-center group cursor-default">
+    <div class="glass-card p-4 rounded-xl flex justify-between items-center group cursor-default border-l-4 border-l-primary">
         <div>
             <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Barang Masuk Hari Ini</p>
             <div class="flex items-end gap-1.5">
-                <span class="text-2xl font-bold text-primary leading-none">124</span>
+                <span class="text-2xl font-bold text-primary leading-none">{{ number_format($stats['incoming_today']) }}</span>
                 <span class="text-xs text-gray-400 pb-0.5">Items</span>
             </div>
         </div>
@@ -33,28 +33,28 @@
             <span class="material-symbols-outlined text-[18px]">move_to_inbox</span>
         </div>
     </div>
-    <div class="glass-card p-4 rounded-xl flex justify-between items-center group cursor-default border-l-4 border-l-yellow-400">
+    <div class="glass-card p-4 rounded-xl flex justify-between items-center group cursor-default border-l-4 border-l-orange-400">
         <div>
             <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Barang Keluar Hari Ini</p>
             <div class="flex items-end gap-1.5">
-                <span class="text-2xl font-bold text-yellow-600 leading-none">86</span>
+                <span class="text-2xl font-bold text-orange-600 leading-none">{{ number_format($stats['outgoing_today']) }}</span>
                 <span class="text-xs text-gray-400 pb-0.5">Items</span>
             </div>
         </div>
-        <div class="w-10 h-10 rounded-xl bg-yellow-50 flex items-center justify-center text-yellow-600 group-hover:scale-110 transition-transform">
+        <div class="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center text-orange-600 group-hover:scale-110 transition-transform">
             <span class="material-symbols-outlined text-[18px]">outbox</span>
         </div>
     </div>
-    <div class="glass-card p-4 rounded-xl flex justify-between items-center group cursor-default">
+    <div class="glass-card p-4 rounded-xl flex justify-between items-center group cursor-default border-l-4 border-l-blue-400">
         <div>
-            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Total Scan Hari Ini</p>
+            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Total Stok Gudang</p>
             <div class="flex items-end gap-1.5">
-                <span class="text-2xl font-bold text-primary leading-none">210</span>
-                <span class="text-xs text-gray-400 pb-0.5">Scans</span>
+                <span class="text-2xl font-bold text-blue-600 leading-none">{{ number_format($stats['total_stock']) }}</span>
+                <span class="text-xs text-gray-400 pb-0.5">Items</span>
             </div>
         </div>
-        <div class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
-            <span class="material-symbols-outlined text-[18px]">qr_code_2</span>
+        <div class="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 group-hover:scale-110 transition-transform">
+            <span class="material-symbols-outlined text-[18px]">inventory</span>
         </div>
     </div>
 </div>
@@ -108,26 +108,25 @@
                 </tr>
             </thead>
             <tbody class="divide-y divide-gray-50">
-                @foreach ([
-                    ['14:25', 'Barang Masuk', 'Box Panel Listrik 30x40', 'A-02-14', 'Berhasil', true],
-                    ['13:50', 'Barang Keluar', 'Kabel NYY 4x10mm', 'C-10-01', 'Berhasil', true],
-                    ['11:15', 'Scan Barcode', 'Isolasi Nitto Black', 'B-05-05', 'Pending', false],
-                    ['09:40', 'Barang Masuk', 'Lampu LED 12W Philips', 'A-01-02', 'Berhasil', true],
-                ] as [$time, $act, $item, $loc, $status, $ok])
+                @forelse ($activities as $act)
                 <tr class="hover:bg-gray-50 transition-colors">
-                    <td class="px-5 py-3 text-sm text-gray-500 whitespace-nowrap font-mono">{{ $time }}</td>
-                    <td class="px-5 py-3 text-sm text-gray-700 font-medium">{{ $act }}</td>
-                    <td class="px-5 py-3 text-sm text-gray-600">{{ $item }}</td>
-                    <td class="px-5 py-3 text-sm font-mono text-gray-500">{{ $loc }}</td>
+                    <td class="px-5 py-3 text-sm text-gray-500 whitespace-nowrap font-mono">{{ $act['time'] }}</td>
+                    <td class="px-5 py-3 text-sm text-gray-700 font-medium">{{ $act['act'] }}</td>
+                    <td class="px-5 py-3 text-sm text-gray-600">{{ $act['item'] }}</td>
+                    <td class="px-5 py-3 text-sm font-mono text-gray-500">{{ $act['loc'] }}</td>
                     <td class="px-5 py-3">
-                        @if($ok)
-                            <span class="inline-flex px-2 py-0.5 rounded-full bg-green-50 text-green-700 text-[10px] font-bold uppercase tracking-wide">{{ $status }}</span>
+                        @if($act['ok'])
+                            <span class="inline-flex px-2 py-0.5 rounded-full bg-green-50 text-green-700 text-[10px] font-bold uppercase tracking-wide">{{ $act['status'] }}</span>
                         @else
-                            <span class="inline-flex px-2 py-0.5 rounded-full bg-yellow-50 text-yellow-700 text-[10px] font-bold uppercase tracking-wide">{{ $status }}</span>
+                            <span class="inline-flex px-2 py-0.5 rounded-full bg-yellow-50 text-yellow-700 text-[10px] font-bold uppercase tracking-wide">{{ $act['status'] }}</span>
                         @endif
                     </td>
                 </tr>
-                @endforeach
+                @empty
+                <tr>
+                    <td colspan="5" class="px-5 py-8 text-center text-gray-400 text-sm italic">Belum ada riwayat aktivitas hari ini.</td>
+                </tr>
+                @endforelse
             </tbody>
         </table>
     </div>

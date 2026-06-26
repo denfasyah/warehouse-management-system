@@ -86,6 +86,9 @@ class ApprovalController extends Controller
 
             DB::commit();
 
+            // Hitung ulang CBS untuk item ini karena ada barang keluar baru
+            \App\Services\CBSService::recalculate($item);
+
             return back()->with('success', "Pengajuan barang keluar '{$item->name}' berhasil disetujui.");
 
         } catch (\Exception $e) {
