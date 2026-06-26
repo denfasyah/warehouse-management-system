@@ -15,45 +15,32 @@ class ItemSeeder extends Seeder
         $categories = Category::all();
         $locations = Location::all();
         
-        $itemNames = [
-            'Kabel NYY 4x10mm',
-            'Box Panel Listrik 30x40',
-            'Isolasi Nitto Black',
-            'Lampu LED 12W Philips',
-            'Bearing SKF 6204',
-            'Baut L M8x20',
-            'Oli Pertamina Meditran',
-            'WD-40 400ml',
-            'Sarung Tangan Karet',
-            'Kacamata Safety',
-            'Helm Proyek Kuning',
-            'Masker 3M N95',
-            'Lem Alteco',
-            'Cat Semprot Pilox Hitam',
-            'Thinner Impala',
-            'Obeng Plus Minus Set',
-            'Tang Potong',
-            'Kunci Pas Ring Set',
-            'Multitester Digital',
-            'Isolasi Pipa AC'
+        $items = [
+            ['name' => 'Transmisi Oil', 'stock' => 3241],
+            ['name' => 'Gear Oil', 'stock' => 624],
+            ['name' => 'Brake Fluid', 'stock' => 1044],
+            ['name' => 'Brake Disc', 'stock' => 967],
+            ['name' => 'Brake Pad', 'stock' => 4655],
+            ['name' => 'Battery', 'stock' => 4821],
+            ['name' => 'Engine Oil', 'stock' => 56293],
         ];
 
-        foreach ($itemNames as $name) {
+        foreach ($items as $itemData) {
             $cat = $categories->random();
             $loc = $locations->random();
             
             Item::create([
                 'category_id' => $cat->id,
                 'location_id' => $loc->id,
-                'name' => $name,
-                'slug' => Str::slug($name),
+                'name' => $itemData['name'],
+                'slug' => Str::slug($itemData['name']),
                 'sku' => Item::generateSku($cat->code),
                 'barcode' => Item::generateBarcode(),
                 'unit' => 'pcs',
-                'stock' => rand(10, 100),
+                'stock' => $itemData['stock'],
                 'min_stock' => rand(5, 15),
                 'storage_class' => 'unclassified', // Diisi oleh CBS engine nanti
-                'description' => 'Deskripsi untuk ' . $name,
+                'description' => 'Deskripsi untuk ' . $itemData['name'],
             ]);
         }
     }

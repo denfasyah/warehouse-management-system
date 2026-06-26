@@ -1,4 +1,4 @@
-@echo off
+@echo on
 echo ===================================================
 echo Memulai Server Laravel 12 (menggunakan PHP 8.3)
 echo ===================================================
