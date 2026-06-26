@@ -26,7 +26,7 @@ class LocationSeeder extends Seeder
                     'bin' => '',
                     'code' => Location::generateCode($zone, $posStr, ''),
                     'storage_class' => $class,
-                    'capacity' => 100,
+                    'capacity' => 2500,
                     'current_fill' => 0,
                     'is_active' => true,
                 ]);

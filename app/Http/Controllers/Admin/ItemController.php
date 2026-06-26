@@ -47,14 +47,50 @@ class ItemController extends Controller
         $data = $request->validated();
         
         $item = Item::create($data);
+        
         if (!empty($data['location_ids'])) {
-            $item->locations()->attach($data['location_ids']);
+            $newLocationIds = array_map('intval', $data['location_ids']);
+            
+            // Ambil detail lokasi yang dipilih, pastikan bulk zone diproses TERAKHIR
+            $selectedLocations = Location::whereIn('id', $newLocationIds)
+                ->orderByRaw("zone = 'BLK' ASC") // non-bulk (0) didahulukan, baru bulk (1)
+                ->orderBy('zone')
+                ->orderBy('rack')
+                ->get();
+            
+            // Distribusikan stok awal item ke lokasi-lokasi secara berurutan (sesuai kapasitas)
+            $remainingStock = $item->stock;
+            $syncData = [];
+            
+            foreach ($selectedLocations as $loc) {
+                if ($remainingStock <= 0) {
+                    $syncData[$loc->id] = ['quantity' => 0];
+                    continue;
+                }
+                
+                // Untuk zona Bulk: tampung semua sisa stok
+                if ($loc->is_bulk_zone) {
+                    $syncData[$loc->id] = ['quantity' => $remainingStock];
+                    $remainingStock = 0;
+                } else {
+                    // Zona Picking: hitung slot tersisa (dari barang LAIN, tapi ini item baru jadi tidak ada item ini di loc tsb)
+                    $otherItemsQty = \Illuminate\Support\Facades\DB::table('item_location')
+                        ->where('location_id', $loc->id)
+                        ->sum('quantity');
+                    
+                    $availableSlot = max(0, $loc->capacity - $otherItemsQty);
+                    $qtyForThisLoc = min($remainingStock, $availableSlot);
+                    
+                    $syncData[$loc->id] = ['quantity' => $qtyForThisLoc];
+                    $remainingStock -= $qtyForThisLoc;
+                }
+            }
+            
+            $item->locations()->attach($syncData);
+            
+            // Sinkronkan current_fill untuk lokasi yang baru dihuni
+            Location::syncFill($newLocationIds);
         }
-
-        // Update fill dari location (bukan dari total qty barang, tapi "jumlah macam barang/SKU" di rak)
-        // Atau jika sistem Anda menghitung current_fill berdasarkan stock barang:
-        // $location = Location::find($data['location_id']);
-        // $location->increment('current_fill', 1);
 
         return redirect()->route('admin.items.index')->with('success', 'Barang baru berhasil ditambahkan.');
     }
@@ -71,9 +107,59 @@ class ItemController extends Controller
     {
         $data = $request->validated();
         
+        // Catat lokasi LAMA sebelum sync (agar bisa direkalkuasi juga)
+        $oldLocationIds = $item->locations()->pluck('locations.id')->toArray();
+
         $item->update($data);
+        
         if (isset($data['location_ids'])) {
-            $item->locations()->sync($data['location_ids']);
+            $newLocationIds = array_map('intval', $data['location_ids']);
+            
+            // Ambil detail lokasi yang dipilih, pastikan bulk zone diproses TERAKHIR
+            $selectedLocations = Location::whereIn('id', $newLocationIds)
+                ->orderByRaw("zone = 'BLK' ASC") // non-bulk (0) didahulukan, baru bulk (1)
+                ->orderBy('zone')
+                ->orderBy('rack')
+                ->get();
+            
+            // Distribusikan stok item ke lokasi-lokasi secara berurutan (sesuai kapasitas)
+            $remainingStock = $item->stock;
+            $syncData = [];
+            
+            foreach ($selectedLocations as $loc) {
+                if ($remainingStock <= 0) {
+                    // Tidak ada stok tersisa → lokasi ini kosong untuk item ini
+                    $syncData[$loc->id] = ['quantity' => 0];
+                    continue;
+                }
+                
+                // Untuk zona Bulk: tampung semua sisa stok
+                if ($loc->is_bulk_zone) {
+                    $syncData[$loc->id] = ['quantity' => $remainingStock];
+                    $remainingStock = 0;
+                } else {
+                    // Zona Picking: hitung berapa slot yang tersisa di rak ini (dari barang LAIN)
+                    $otherItemsQty = \Illuminate\Support\Facades\DB::table('item_location')
+                        ->where('location_id', $loc->id)
+                        ->where('item_id', '!=', $item->id)
+                        ->sum('quantity');
+                    
+                    $availableSlot = max(0, $loc->capacity - $otherItemsQty);
+                    $qtyForThisLoc = min($remainingStock, $availableSlot);
+                    
+                    $syncData[$loc->id] = ['quantity' => $qtyForThisLoc];
+                    $remainingStock -= $qtyForThisLoc;
+                }
+            }
+            
+            // Sync lokasi dengan distribusi baru
+            $item->locations()->sync($syncData);
+            
+            // Sinkronkan current_fill untuk lokasi lama DAN baru
+            $allAffectedIds = array_unique(array_merge($oldLocationIds, $newLocationIds));
+            Location::syncFill($allAffectedIds);
+        } elseif (!empty($oldLocationIds)) {
+            Location::syncFill($oldLocationIds);
         }
 
         return redirect()->route('admin.items.index')->with('success', 'Data barang berhasil diperbarui.');
@@ -85,7 +171,18 @@ class ItemController extends Controller
             return back()->with('error', 'Barang tidak dapat dihapus karena masih ada stok.');
         }
 
+        // Catat lokasi yang akan terdampak sebelum hapus
+        $locationIds = $item->locations()->pluck('locations.id')->toArray();
+
+        // Detach semua relasi lokasi dulu (cascade pivot)
+        $item->locations()->detach();
         $item->delete();
+
+        // Rekalkuasi current_fill untuk semua lokasi yang terdampak
+        if (!empty($locationIds)) {
+            Location::syncFill($locationIds);
+        }
+
         return redirect()->route('admin.items.index')->with('success', 'Data barang berhasil dihapus.');
     }
 

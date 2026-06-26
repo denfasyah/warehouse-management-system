@@ -47,11 +47,21 @@ class ApprovalController extends Controller
             // Kurangi stok barang
             $item->decrement('stock', $outgoing->quantity);
 
-            // Kurangi isi rak
+            // Kurangi quantity di pivot item_location
             if ($location) {
-                // Ensure we don't go below zero
-                $newFill = max(0, $location->current_fill - $outgoing->quantity);
-                $location->update(['current_fill' => $newFill]);
+                $pivotQty = \Illuminate\Support\Facades\DB::table('item_location')
+                    ->where('item_id', $item->id)
+                    ->where('location_id', $location->id)
+                    ->value('quantity') ?? 0;
+                
+                $newPivotQty = max(0, $pivotQty - $outgoing->quantity);
+                \Illuminate\Support\Facades\DB::table('item_location')
+                    ->where('item_id', $item->id)
+                    ->where('location_id', $location->id)
+                    ->update(['quantity' => $newPivotQty]);
+
+                // Sinkronkan current_fill dari pivot (satu titik terpusat)
+                \App\Models\Location::syncFill($location->id);
             }
 
             // Update status outgoing

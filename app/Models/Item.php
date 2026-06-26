@@ -94,6 +94,10 @@ class Item extends Model
         
         // If any location doesn't match the storage class, return true (mismatch)
         foreach ($this->locations as $loc) {
+            // Ignore bulk/general storage class as they are universal
+            if ($loc->storage_class === 'general' || $loc->is_bulk_zone) {
+                continue;
+            }
             if ($loc->storage_class !== $this->storage_class) {
                 return true;
             }

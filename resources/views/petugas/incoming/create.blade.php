@@ -139,6 +139,7 @@
         if (query.length < 2) {
             searchResults.innerHTML = '';
             searchResults.classList.add('hidden');
+            searchResults.classList.remove('flex');
             searchEmpty.classList.add('hidden');
             searchIdle.classList.remove('hidden');
             return;
@@ -153,10 +154,12 @@
                     searchResults.innerHTML = '';
                     if (data.length === 0) {
                         searchResults.classList.add('hidden');
+                        searchResults.classList.remove('flex');
                         searchEmpty.classList.remove('hidden');
                     } else {
                         searchEmpty.classList.add('hidden');
                         searchResults.classList.remove('hidden');
+                        searchResults.classList.add('flex');
                         
                         data.forEach(item => {
                             const locationCode = item.locations_codes || '-';
@@ -208,6 +211,7 @@
         searchInput.value = '';
         searchResults.innerHTML = '';
         searchResults.classList.add('hidden');
+        searchResults.classList.remove('flex');
         searchIdle.classList.remove('hidden');
     }
 </script>

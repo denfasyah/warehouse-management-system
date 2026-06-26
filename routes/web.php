@@ -38,6 +38,14 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::get('items/export', [\App\Http\Controllers\Admin\ItemController::class, 'exportCsv'])->name('items.export');
     Route::resource('items', \App\Http\Controllers\Admin\ItemController::class)->except(['show']);
     Route::get('items/{item}/barcode', [\App\Http\Controllers\Admin\BarcodeController::class, 'print'])->name('barcode.print');
+
+    // Class-Based Storage (CBS)
+    Route::get('settings', [\App\Http\Controllers\Admin\SettingController::class, 'index'])->name('settings.index');
+    Route::post('settings', [\App\Http\Controllers\Admin\SettingController::class, 'update'])->name('settings.update');
+    
+    Route::get('cbs/classification', [\App\Http\Controllers\Admin\CBSController::class, 'classification'])->name('cbs.classification');
+    Route::post('cbs/recalculate', [\App\Http\Controllers\Admin\CBSController::class, 'recalculate'])->name('cbs.recalculate');
+    Route::get('cbs/mapping', [\App\Http\Controllers\Admin\CBSController::class, 'mapping'])->name('cbs.mapping');
 });
 
 // PETUGAS ROUTES

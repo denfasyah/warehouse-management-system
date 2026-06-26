@@ -207,7 +207,7 @@
             </div>
             <div>
                 <label class="block text-sm font-semibold text-gray-700 mb-1">Kapasitas Maksimal <span class="text-red-500">*</span></label>
-                <input type="number" name="capacity" value="{{ old('capacity', 100) }}" required min="1" class="w-full rounded-lg border-gray-300 focus:border-primary focus:ring focus:ring-primary/20 text-sm">
+                <input type="number" name="capacity" value="{{ old('capacity', 2500) }}" required min="1" class="w-full rounded-lg border-gray-300 focus:border-primary focus:ring focus:ring-primary/20 text-sm">
             </div>
         </div>
         <div>

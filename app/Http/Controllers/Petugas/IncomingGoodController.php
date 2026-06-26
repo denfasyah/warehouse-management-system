@@ -61,8 +61,19 @@ class IncomingGoodController extends Controller
             // Update stok item
             $item->increment('stock', $request->quantity);
 
-            // Update isi rak
-            $location->increment('current_fill', $request->quantity);
+            // Update pivot quantity (quantity di lokasi picking bertambah)
+            $currentQty = \Illuminate\Support\Facades\DB::table('item_location')
+                ->where('item_id', $item->id)
+                ->where('location_id', $locationId)
+                ->value('quantity') ?? 0;
+            
+            \Illuminate\Support\Facades\DB::table('item_location')
+                ->where('item_id', $item->id)
+                ->where('location_id', $locationId)
+                ->update(['quantity' => $currentQty + $request->quantity]);
+
+            // Sinkronkan current_fill lokasi dari pivot (satu titik terpusat)
+            \App\Models\Location::syncFill($locationId);
 
             DB::commit();
 
@@ -78,16 +89,16 @@ class IncomingGoodController extends Controller
     // Endpoint untuk Live Search (AJAX)
     public function search(Request $request)
     {
-        $query = $request->get('q');
+        $query = strtolower($request->get('q'));
         
         if (empty($query)) {
             return response()->json([]);
         }
 
         $items = Item::with(['category', 'locations'])
-            ->where('name', 'like', "%{$query}%")
-            ->orWhere('sku', 'like', "%{$query}%")
-            ->orWhere('barcode', 'like', "%{$query}%")
+            ->whereRaw('LOWER(name) LIKE ?', ["%{$query}%"])
+            ->orWhereRaw('LOWER(sku) LIKE ?', ["%{$query}%"])
+            ->orWhereRaw('LOWER(barcode) LIKE ?', ["%{$query}%"])
             ->limit(10)
             ->get()
             ->map(function($item) {

@@ -104,4 +104,26 @@ class Location extends Model
         }
         return $code;
     }
+
+    /**
+     * Sinkronkan current_fill untuk satu atau beberapa lokasi
+     * berdasarkan jumlah quantity riil di tabel pivot item_location.
+     *
+     * @param  int|array  $locationIds  ID lokasi yang akan direkalkuasi
+     */
+    public static function syncFill(int|array $locationIds): void
+    {
+        $ids = is_array($locationIds) ? $locationIds : [$locationIds];
+        $ids = array_filter($ids); // Buang nilai null/0
+
+        if (empty($ids)) return;
+
+        foreach ($ids as $id) {
+            $totalQty = \Illuminate\Support\Facades\DB::table('item_location')
+                ->where('location_id', $id)
+                ->sum('quantity');
+
+            static::where('id', $id)->update(['current_fill' => $totalQty]);
+        }
+    }
 }
