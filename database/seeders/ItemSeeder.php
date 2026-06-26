@@ -13,7 +13,7 @@ class ItemSeeder extends Seeder
     public function run(): void
     {
         $categories = Category::all();
-        $locations = Location::all();
+        $locations = Location::orderBy('code')->get();
         
         $items = [
             ['name' => 'Transmisi Oil', 'stock' => 3241],
@@ -25,13 +25,12 @@ class ItemSeeder extends Seeder
             ['name' => 'Engine Oil', 'stock' => 56293],
         ];
 
-        foreach ($items as $itemData) {
-            $cat = $categories->random();
-            $loc = $locations->random();
+        foreach ($items as $index => $itemData) {
+            $cat = $categories->first(); // Since we only have 1 category now
+            $loc = $locations[$index] ?? $locations->first(); // Assign sequentially (A-01, A-02, etc)
             
-            Item::create([
+            $item = Item::create([
                 'category_id' => $cat->id,
-                'location_id' => $loc->id,
                 'name' => $itemData['name'],
                 'slug' => Str::slug($itemData['name']),
                 'sku' => Item::generateSku($cat->code),
@@ -42,6 +41,20 @@ class ItemSeeder extends Seeder
                 'storage_class' => 'unclassified', // Diisi oleh CBS engine nanti
                 'description' => 'Deskripsi untuk ' . $itemData['name'],
             ]);
+
+            // Assign locations
+            if ($itemData['name'] === 'Engine Oil') {
+                $loc1 = $locations->where('code', 'B-03')->first();
+                $loc2 = $locations->where('code', 'B-04')->first();
+                
+                $attachData = [];
+                if ($loc1) $attachData[$loc1->id] = ['quantity' => 30000];
+                if ($loc2) $attachData[$loc2->id] = ['quantity' => 26293];
+                
+                $item->locations()->attach($attachData);
+            } else {
+                $item->locations()->attach([$loc->id => ['quantity' => $itemData['stock']]]);
+            }
         }
     }
 }

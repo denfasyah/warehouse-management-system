@@ -49,15 +49,15 @@
 
                 <div>
                     <label class="block text-sm font-semibold text-gray-700 mb-1.5">Lokasi Rak Penyimpanan <span class="text-red-500">*</span></label>
-                    <select name="location_id" required class="w-full rounded-xl border-gray-300 focus:border-primary focus:ring focus:ring-primary/20">
-                        <option value="" disabled selected>Pilih Lokasi</option>
+                    <select name="location_ids[]" multiple required class="w-full rounded-xl border-gray-300 focus:border-primary focus:ring focus:ring-primary/20" size="4">
                         @foreach($locations as $loc)
-                            <option value="{{ $loc->id }}" {{ old('location_id') == $loc->id ? 'selected' : '' }}>
+                            <option value="{{ $loc->id }}" {{ (is_array(old('location_ids')) && in_array($loc->id, old('location_ids'))) ? 'selected' : '' }}>
                                 {{ $loc->code }} (Kelas: {{ ucfirst($loc->storage_class) }} | Sisa: {{ $loc->capacity - $loc->current_fill }})
                             </option>
                         @endforeach
                     </select>
-                    @error('location_id') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                    <p class="text-[11px] text-gray-500 mt-1">Tahan tombol Ctrl/Cmd untuk memilih lebih dari satu lokasi.</p>
+                    @error('location_ids') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
                 </div>
             </div>
 

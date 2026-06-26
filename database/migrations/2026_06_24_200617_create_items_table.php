@@ -11,7 +11,7 @@ return new class extends Migration
         Schema::create('items', function (Blueprint $table) {
             $table->id();
             $table->foreignId('category_id')->constrained('categories')->restrictOnDelete();
-            $table->foreignId('location_id')->nullable()->constrained('locations')->nullOnDelete();
+
             $table->string('name');
             $table->string('slug')->unique()->nullable();               // slug untuk URL (nullable for migration safety)
             $table->string('sku', 50)->unique();          // kode unik sistem

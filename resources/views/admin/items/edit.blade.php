@@ -49,15 +49,16 @@
 
                 <div>
                     <label class="block text-sm font-semibold text-gray-700 mb-1.5">Lokasi Rak Penyimpanan <span class="text-red-500">*</span></label>
-                    <select name="location_id" required class="w-full rounded-xl border-gray-300 focus:border-primary focus:ring focus:ring-primary/20">
+                    <select name="location_ids[]" multiple required class="w-full rounded-xl border-gray-300 focus:border-primary focus:ring focus:ring-primary/20" size="4">
                         @foreach($locations as $loc)
-                            <option value="{{ $loc->id }}" {{ (old('location_id') ?? $item->location_id) == $loc->id ? 'selected' : '' }}
-                                {{ $loc->current_fill >= $loc->capacity && $item->location_id != $loc->id ? 'disabled' : '' }}>
-                                {{ $loc->code }} (Kelas: {{ ucfirst($loc->storage_class) }} {{ $loc->current_fill >= $loc->capacity && $item->location_id != $loc->id ? '- Penuh' : '' }})
+                            <option value="{{ $loc->id }}" {{ (is_array(old('location_ids')) ? in_array($loc->id, old('location_ids')) : $item->locations->contains($loc->id)) ? 'selected' : '' }}
+                                {{ $loc->current_fill >= $loc->capacity && !$item->locations->contains($loc->id) ? 'disabled' : '' }}>
+                                {{ $loc->code }} (Kelas: {{ ucfirst($loc->storage_class) }} {{ $loc->current_fill >= $loc->capacity && !$item->locations->contains($loc->id) ? '- Penuh' : '' }})
                             </option>
                         @endforeach
                     </select>
-                    @error('location_id') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                    <p class="text-[11px] text-gray-500 mt-1">Tahan tombol Ctrl/Cmd untuk memilih lebih dari satu lokasi.</p>
+                    @error('location_ids') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
                 </div>
             </div>
 

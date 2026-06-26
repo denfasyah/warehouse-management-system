@@ -12,7 +12,6 @@ class Item extends Model
 
     protected $fillable = [
         'category_id',
-        'location_id',
         'name',
         'slug',
         'sku',
@@ -41,9 +40,9 @@ class Item extends Model
         return $this->belongsTo(Category::class);
     }
 
-    public function location()
+    public function locations()
     {
-        return $this->belongsTo(Location::class);
+        return $this->belongsToMany(Location::class)->withPivot('quantity')->withTimestamps();
     }
 
     public function incomingGoods()
@@ -89,10 +88,17 @@ class Item extends Model
     /** Apakah lokasi barang sesuai dengan kelas CBS-nya */
     public function getIsLocationMismatchAttribute(): bool
     {
-        if (! $this->location || $this->storage_class === 'unclassified') {
+        if ($this->locations->isEmpty() || $this->storage_class === 'unclassified') {
             return false;
         }
-        return $this->location->storage_class !== $this->storage_class;
+        
+        // If any location doesn't match the storage class, return true (mismatch)
+        foreach ($this->locations as $loc) {
+            if ($loc->storage_class !== $this->storage_class) {
+                return true;
+            }
+        }
+        return false;
     }
 
     // ─── Scopes ──────────────────────────────────────────────

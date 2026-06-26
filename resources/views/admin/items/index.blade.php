@@ -76,10 +76,15 @@
                         <span class="px-2.5 py-1 bg-gray-100 text-gray-700 rounded-md text-xs font-mono font-bold tracking-widest">{{ $item->sku }}</span>
                     </td>
                     <td class="px-6 py-4">
-                        <div class="flex items-center gap-2">
-                            <span class="px-2.5 py-1 bg-surface-container-high text-on-surface rounded-md text-xs font-semibold">{{ $item->location->code }}</span>
-                            @if($item->class_mismatch)
-                                <span title="Mismatch CBS (Barang Fast Moving di Rak Slow Moving dsb)" class="material-symbols-outlined text-orange-500 text-[18px] cursor-help">warning</span>
+                        <div class="flex flex-wrap items-center gap-1.5">
+                            @forelse($item->locations as $loc)
+                                <span class="px-2.5 py-1 bg-surface-container-high text-on-surface rounded-md text-xs font-semibold">{{ $loc->code }}</span>
+                            @empty
+                                <span class="text-gray-400 text-xs italic">Belum diatur</span>
+                            @endforelse
+                            
+                            @if($item->is_location_mismatch)
+                                <span title="Mismatch CBS (Barang Fast Moving di Rak Slow Moving dsb)" class="material-symbols-outlined text-orange-500 text-[18px] cursor-help ml-1">warning</span>
                             @endif
                         </div>
                     </td>

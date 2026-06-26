@@ -13,7 +13,7 @@ class ItemController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Item::with(['category', 'location'])->latest();
+        $query = Item::with(['category', 'locations'])->latest();
 
         // Pencarian
         if ($request->filled('search')) {
@@ -47,6 +47,9 @@ class ItemController extends Controller
         $data = $request->validated();
         
         $item = Item::create($data);
+        if (!empty($data['location_ids'])) {
+            $item->locations()->attach($data['location_ids']);
+        }
 
         // Update fill dari location (bukan dari total qty barang, tapi "jumlah macam barang/SKU" di rak)
         // Atau jika sistem Anda menghitung current_fill berdasarkan stock barang:
@@ -69,6 +72,9 @@ class ItemController extends Controller
         $data = $request->validated();
         
         $item->update($data);
+        if (isset($data['location_ids'])) {
+            $item->locations()->sync($data['location_ids']);
+        }
 
         return redirect()->route('admin.items.index')->with('success', 'Data barang berhasil diperbarui.');
     }
@@ -86,7 +92,7 @@ class ItemController extends Controller
     public function exportCsv(Request $request)
     {
         $fileName = 'data_barang_wms_' . date('Y-m-d_His') . '.csv';
-        $items = Item::with(['category', 'location'])->get();
+        $items = Item::with(['category', 'locations'])->get();
 
         $headers = [
             "Content-type"        => "text/csv",
@@ -112,7 +118,7 @@ class ItemController extends Controller
                 $row['Kategori']    = $item->category->name ?? '-';
                 $row['SKU']         = $item->sku;
                 $row['Barcode']     = $item->barcode;
-                $row['Lokasi/Rak']  = $item->location->code ?? '-';
+                $row['Lokasi/Rak']  = $item->locations->pluck('code')->join(', ') ?: '-';
                 $row['Stok']        = $item->stock;
                 $row['Satuan']      = $item->unit;
                 $row['Min Stok']    = $item->min_stock;

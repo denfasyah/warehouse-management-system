@@ -22,7 +22,8 @@ class ItemRequest extends FormRequest
             'name' => ['required', 'string', 'max:255'],
             'slug' => ['nullable', 'string', 'max:255', Rule::unique('items')->ignore($itemId)],
             'category_id' => ['required', 'exists:categories,id'],
-            'location_id' => ['required', 'exists:locations,id'],
+            'location_ids' => ['required', 'array', 'min:1'],
+            'location_ids.*' => ['exists:locations,id'],
             'sku' => [
                 'nullable', 
                 'string', 
