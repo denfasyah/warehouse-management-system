@@ -89,8 +89,12 @@ class Location extends Model
     // ─── Static Helpers ──────────────────────────────────────
 
     /** Generate kode lokasi dari zone, rack, bin */
-    public static function generateCode(string $zone, string $rack, string $bin): string
+    public static function generateCode(string $zone, string $rack, ?string $bin = ''): string
     {
-        return strtoupper($zone) . '-' . str_pad($rack, 2, '0', STR_PAD_LEFT) . '-' . str_pad($bin, 2, '0', STR_PAD_LEFT);
+        $code = strtoupper($zone) . '-' . str_pad($rack, 2, '0', STR_PAD_LEFT);
+        if ($bin && $bin !== '') {
+            $code .= '-' . str_pad($bin, 2, '0', STR_PAD_LEFT);
+        }
+        return $code;
     }
 }

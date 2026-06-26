@@ -13,26 +13,22 @@ class LocationSeeder extends Seeder
             'A' => 'fast',
             'B' => 'medium',
             'C' => 'slow',
-            'D' => 'general'
         ];
 
         foreach ($zones as $zone => $class) {
-            for ($rack = 1; $rack <= 5; $rack++) {
-                for ($bin = 1; $bin <= 2; $bin++) {
-                    $rackStr = str_pad($rack, 2, '0', STR_PAD_LEFT);
-                    $binStr = str_pad($bin, 2, '0', STR_PAD_LEFT);
-                    
-                    Location::create([
-                        'zone' => $zone,
-                        'rack' => $rackStr,
-                        'bin' => $binStr,
-                        'code' => Location::generateCode($zone, $rack, $bin),
-                        'storage_class' => $class,
-                        'capacity' => 100,
-                        'current_fill' => rand(0, 80),
-                        'is_active' => true,
-                    ]);
-                }
+            for ($pos = 1; $pos <= 4; $pos++) {
+                $posStr = str_pad($pos, 2, '0', STR_PAD_LEFT);
+                
+                Location::create([
+                    'zone' => $zone,
+                    'rack' => $posStr,
+                    'bin' => '',
+                    'code' => Location::generateCode($zone, $posStr, ''),
+                    'storage_class' => $class,
+                    'capacity' => 100,
+                    'current_fill' => rand(0, 80),
+                    'is_active' => true,
+                ]);
             }
         }
     }

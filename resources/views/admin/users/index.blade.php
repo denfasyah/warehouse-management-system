@@ -113,7 +113,6 @@
                                     <option value="Zona A" {{ old('warehouse_sector', $user->warehouse_sector) == 'Zona A' ? 'selected' : '' }}>Zona A</option>
                                     <option value="Zona B" {{ old('warehouse_sector', $user->warehouse_sector) == 'Zona B' ? 'selected' : '' }}>Zona B</option>
                                     <option value="Zona C" {{ old('warehouse_sector', $user->warehouse_sector) == 'Zona C' ? 'selected' : '' }}>Zona C</option>
-                                    <option value="Zona D" {{ old('warehouse_sector', $user->warehouse_sector) == 'Zona D' ? 'selected' : '' }}>Zona D</option>
                                 </select>
                             </div>
                         </div>
@@ -180,7 +179,6 @@
                     <option value="Zona A" {{ old('warehouse_sector') == 'Zona A' ? 'selected' : '' }}>Zona A</option>
                     <option value="Zona B" {{ old('warehouse_sector') == 'Zona B' ? 'selected' : '' }}>Zona B</option>
                     <option value="Zona C" {{ old('warehouse_sector') == 'Zona C' ? 'selected' : '' }}>Zona C</option>
-                    <option value="Zona D" {{ old('warehouse_sector') == 'Zona D' ? 'selected' : '' }}>Zona D</option>
                 </select>
             </div>
         </div>
