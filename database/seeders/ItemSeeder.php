@@ -13,47 +13,60 @@ class ItemSeeder extends Seeder
     public function run(): void
     {
         $categories = Category::all();
-        $locations = Location::orderBy('code')->get();
+        // Picking zone locations (A-01 s/d C-04) — kapasitas 100 per rak
+        $pickingLocations = Location::where('zone', '!=', 'BLK')->orderBy('code')->get();
+        $bulkLoc = Location::where('code', 'BLK-01')->first();
         
         $items = [
-            ['name' => 'Transmisi Oil', 'stock' => 3241],
-            ['name' => 'Gear Oil', 'stock' => 624],
-            ['name' => 'Brake Fluid', 'stock' => 1044],
-            ['name' => 'Brake Disc', 'stock' => 967],
-            ['name' => 'Brake Pad', 'stock' => 4655],
-            ['name' => 'Battery', 'stock' => 4821],
-            ['name' => 'Engine Oil', 'stock' => 56293],
+            // [nama, stok, picking_zone_code]
+            ['name' => 'Transmisi Oil', 'stock' => 3241,  'picking' => 'A-01'],
+            ['name' => 'Gear Oil',      'stock' => 624,   'picking' => 'A-02'],
+            ['name' => 'Brake Fluid',   'stock' => 1044,  'picking' => 'A-03'],
+            ['name' => 'Brake Disc',    'stock' => 967,   'picking' => 'A-04'],
+            ['name' => 'Brake Pad',     'stock' => 4655,  'picking' => 'B-01'],
+            ['name' => 'Battery',       'stock' => 4821,  'picking' => 'B-02'],
+            ['name' => 'Engine Oil',    'stock' => 56293, 'picking' => 'B-03'],
         ];
 
-        foreach ($items as $index => $itemData) {
-            $cat = $categories->first(); // Since we only have 1 category now
-            $loc = $locations[$index] ?? $locations->first(); // Assign sequentially (A-01, A-02, etc)
+        $pickingCapacity = 100; // Kapasitas rak picking zone per rak
+
+        foreach ($items as $itemData) {
+            $cat = $categories->first();
             
             $item = Item::create([
                 'category_id' => $cat->id,
-                'name' => $itemData['name'],
-                'slug' => Str::slug($itemData['name']),
-                'sku' => Item::generateSku($cat->code),
-                'barcode' => Item::generateBarcode(),
-                'unit' => 'pcs',
-                'stock' => $itemData['stock'],
-                'min_stock' => rand(5, 15),
-                'storage_class' => 'unclassified', // Diisi oleh CBS engine nanti
+                'name'        => $itemData['name'],
+                'slug'        => Str::slug($itemData['name']),
+                'sku'         => Item::generateSku($cat->code),
+                'barcode'     => Item::generateBarcode(),
+                'unit'        => 'pcs',
+                'stock'       => $itemData['stock'],
+                'min_stock'   => 10,
+                'storage_class' => 'unclassified',
                 'description' => 'Deskripsi untuk ' . $itemData['name'],
             ]);
 
-            // Assign locations
-            if ($itemData['name'] === 'Engine Oil') {
-                $loc1 = $locations->where('code', 'B-03')->first();
-                $loc2 = $locations->where('code', 'B-04')->first();
-                
-                $attachData = [];
-                if ($loc1) $attachData[$loc1->id] = ['quantity' => 30000];
-                if ($loc2) $attachData[$loc2->id] = ['quantity' => 26293];
-                
-                $item->locations()->attach($attachData);
+            $pickingLoc = $pickingLocations->where('code', $itemData['picking'])->first();
+            $totalStock = $itemData['stock'];
+
+            if ($totalStock <= $pickingCapacity) {
+                // Stok muat di picking zone saja
+                if ($pickingLoc) {
+                    $item->locations()->attach([$pickingLoc->id => ['quantity' => $totalStock]]);
+                }
             } else {
-                $item->locations()->attach([$loc->id => ['quantity' => $itemData['stock']]]);
+                // Stok melebihi kapasitas picking zone — sebagian taruh di Bulk (overflow)
+                $pickingQty = $pickingCapacity;
+                $bulkQty    = $totalStock - $pickingCapacity;
+
+                $attachData = [];
+                if ($pickingLoc) {
+                    $attachData[$pickingLoc->id] = ['quantity' => $pickingQty];
+                }
+                if ($bulkLoc) {
+                    $attachData[$bulkLoc->id] = ['quantity' => $bulkQty];
+                }
+                $item->locations()->attach($attachData);
             }
         }
     }

@@ -9,6 +9,7 @@ class LocationSeeder extends Seeder
 {
     public function run(): void
     {
+        // Zona Picking (A, B, C) — kapasitas terbatas, tempat ambil sehari-hari
         $zones = [
             'A' => 'fast',
             'B' => 'medium',
@@ -26,10 +27,27 @@ class LocationSeeder extends Seeder
                     'code' => Location::generateCode($zone, $posStr, ''),
                     'storage_class' => $class,
                     'capacity' => 100,
-                    'current_fill' => rand(0, 80),
+                    'current_fill' => 0,
                     'is_active' => true,
                 ]);
             }
+        }
+
+        // Zona BLK (Bulk Storage / Timbunan) — kapasitas sangat besar, untuk stok overflow
+        for ($pos = 1; $pos <= 2; $pos++) {
+            $posStr = str_pad($pos, 2, '0', STR_PAD_LEFT);
+
+            Location::create([
+                'zone' => 'BLK',
+                'rack' => $posStr,
+                'bin' => '',
+                'code' => 'BLK-' . $posStr,
+                'storage_class' => 'general',
+                'capacity' => 999999, // Kapasitas sangat besar untuk bulk storage
+                'current_fill' => 0,
+                'description' => 'Bulk Storage / Area Timbunan Stok Berlebih',
+                'is_active' => true,
+            ]);
         }
     }
 }

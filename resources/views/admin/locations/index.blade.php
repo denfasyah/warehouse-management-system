@@ -37,7 +37,15 @@
                 <tr class="hover:bg-gray-50/50 transition-colors">
                     <td class="px-6 py-4 text-sm text-gray-500">{{ $index + 1 }}</td>
                     <td class="px-6 py-4">
-                        <span class="px-2.5 py-1 bg-gray-100 text-gray-700 rounded-md text-xs font-mono font-bold tracking-widest">{{ $location->code }}</span>
+                        <div class="flex items-center gap-2">
+                            <span class="px-2.5 py-1 rounded-md text-xs font-mono font-bold tracking-widest
+                                {{ $location->is_bulk_zone ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-700' }}">
+                                {{ $location->code }}
+                            </span>
+                            @if($location->is_bulk_zone)
+                                <span class="px-2 py-0.5 bg-blue-50 text-blue-700 border border-blue-200 text-[10px] font-bold rounded">BULK</span>
+                            @endif
+                        </div>
                         <p class="text-[10px] text-gray-400 mt-1 uppercase">Zone: {{ $location->zone }} | Rack: {{ $location->rack }}</p>
                     </td>
                     <td class="px-6 py-4">
@@ -45,18 +53,30 @@
                             {{ $location->storage_class == 'fast' ? 'bg-red-50 text-red-700 border-red-200' : 
                                ($location->storage_class == 'medium' ? 'bg-yellow-50 text-yellow-700 border-yellow-200' : 
                                ($location->storage_class == 'slow' ? 'bg-green-50 text-green-700 border-green-200' : 
-                               'bg-gray-50 text-gray-700 border-gray-200')) }} border">
-                            {{ ucfirst($location->storage_class) }}
+                               ($location->storage_class == 'general' ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                               'bg-gray-50 text-gray-700 border-gray-200'))) }} border">
+                            {{ $location->storage_class == 'general' ? 'Bulk / Umum' : ucfirst($location->storage_class) }}
                         </span>
                     </td>
                     <td class="px-6 py-4">
                         <div class="flex items-center justify-between text-xs mb-1">
-                            <span class="font-medium text-gray-700">{{ $location->current_fill }} / {{ $location->capacity }} Item</span>
-                            <span class="text-gray-500">{{ $location->fill_percentage }}%</span>
+                            @if($location->is_bulk_zone)
+                                <span class="font-medium text-blue-700">{{ number_format($location->current_fill) }} Item (Bulk)</span>
+                                <span class="text-blue-500">Unlimited</span>
+                            @else
+                                <span class="font-medium text-gray-700">{{ $location->current_fill }} / {{ $location->capacity }} Item</span>
+                                <span class="text-gray-500">{{ $location->fill_percentage }}%</span>
+                            @endif
                         </div>
+                        @if(!$location->is_bulk_zone)
                         <div class="w-full bg-gray-100 h-1.5 rounded-full overflow-hidden">
                             <div class="h-full rounded-full {{ $location->fill_percentage >= 90 ? 'bg-red-500' : ($location->fill_percentage >= 70 ? 'bg-yellow-400' : 'bg-primary') }}" style="width: {{ $location->fill_percentage }}%"></div>
                         </div>
+                        @else
+                        <div class="w-full bg-blue-100 h-1.5 rounded-full overflow-hidden">
+                            <div class="h-full rounded-full bg-blue-400" style="width: 10%"></div>
+                        </div>
+                        @endif
                     </td>
                     <td class="px-6 py-4 text-center">
                         @if($location->is_active)

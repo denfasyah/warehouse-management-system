@@ -65,8 +65,15 @@ class Location extends Model
             'fast'    => 'red',
             'medium'  => 'yellow',
             'slow'    => 'green',
+            'general' => 'blue',
             default   => 'gray',
         };
+    }
+
+    /** Apakah ini zona Bulk Storage (Timbunan Overflow) */
+    public function getIsBulkZoneAttribute(): bool
+    {
+        return $this->zone === 'BLK';
     }
 
     // ─── Scopes ──────────────────────────────────────────────
