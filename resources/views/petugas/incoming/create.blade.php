@@ -159,7 +159,7 @@
                         searchResults.classList.remove('hidden');
                         
                         data.forEach(item => {
-                            const locationCode = item.location ? item.location.code : '-';
+                            const locationCode = item.locations_codes || '-';
                             const categoryName = item.category ? item.category.name : '-';
                             
                             const div = document.createElement('div');
@@ -200,7 +200,7 @@
         // Update DOM
         displayItemName.textContent = item.name;
         displayItemSku.textContent = 'SKU: ' + item.sku;
-        displayItemLocation.textContent = 'Lokasi Rak: ' + (item.location ? item.location.code : '-');
+        displayItemLocation.textContent = 'Lokasi: ' + (item.locations_codes || '-');
         displayItemStock.textContent = 'Sisa Stok: ' + item.stock;
         displayItemUnit.textContent = item.unit;
         

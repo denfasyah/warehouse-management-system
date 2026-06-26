@@ -32,23 +32,27 @@ class OutgoingGoodController extends Controller
         try {
             DB::beginTransaction();
 
-            $item = Item::findOrFail($request->item_id);
+            $item = Item::with('locations')->findOrFail($request->item_id);
             
             // Validasi: Qty tidak boleh melebihi stok yang ada
             if ($request->quantity > $item->stock) {
                 return back()->with('error', "Kuantitas keluar ({$request->quantity}) melebihi sisa stok saat ini ({$item->stock}).")->withInput();
             }
 
+            // Gunakan lokasi picking pertama (bukan BLK/bulk) sebagai referensi lokasi keluar
+            $pickingLocation = $item->locations->firstWhere('zone', '!=', 'BLK');
+            $locationId = $pickingLocation ? $pickingLocation->id : ($item->locations->first()?->id);
+
             // Catat request keluar dengan status 'pending' (Default)
             // Stok BELUM dikurangi di tahap ini.
             OutgoingGood::create([
-                'item_id' => $item->id,
+                'item_id'      => $item->id,
                 'requested_by' => auth()->id(),
-                'location_id' => $item->location_id,
-                'quantity' => $request->quantity,
-                'destination' => $request->destination,
-                'note' => $request->note,
-                'status' => 'pending'
+                'location_id'  => $locationId,
+                'quantity'     => $request->quantity,
+                'destination'  => $request->destination,
+                'note'         => $request->note,
+                'status'       => 'pending'
             ]);
 
             DB::commit();

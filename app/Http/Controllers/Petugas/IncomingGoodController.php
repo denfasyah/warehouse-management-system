@@ -33,12 +33,19 @@ class IncomingGoodController extends Controller
         try {
             DB::beginTransaction();
 
-            $item = Item::findOrFail($request->item_id);
-            $locationId = $item->location_id; // Default menggunakan lokasi master item
+            $item = Item::with('locations')->findOrFail($request->item_id);
+            
+            // Gunakan lokasi picking pertama (bukan BLK/bulk) sebagai lokasi catat barang masuk
+            $pickingLocation = $item->locations->firstWhere('zone', '!=', 'BLK');
+            $locationId = $pickingLocation ? $pickingLocation->id : ($item->locations->first()?->id);
 
-            // Cek kapasitas
-            $location = $item->location;
-            if ($location->current_fill + $request->quantity > $location->capacity) {
+            if (!$locationId) {
+                return back()->with('error', 'Barang ini belum memiliki lokasi penyimpanan yang terdaftar.')->withInput();
+            }
+
+            $location = $item->locations->find($locationId);
+            // Cek kapasitas hanya untuk picking zone (bukan bulk)
+            if ($location && !$location->is_bulk_zone && ($location->current_fill + $request->quantity > $location->capacity)) {
                 return back()->with('error', 'Kapasitas rak (' . $location->code . ') tidak mencukupi. Sisa ruang: ' . ($location->capacity - $location->current_fill))->withInput();
             }
 
@@ -77,12 +84,17 @@ class IncomingGoodController extends Controller
             return response()->json([]);
         }
 
-        $items = Item::with(['category', 'location'])
+        $items = Item::with(['category', 'locations'])
             ->where('name', 'like', "%{$query}%")
             ->orWhere('sku', 'like', "%{$query}%")
             ->orWhere('barcode', 'like', "%{$query}%")
             ->limit(10)
-            ->get();
+            ->get()
+            ->map(function($item) {
+                // Tambahkan field ringkas locations_codes agar mudah dibaca di JS
+                $item->locations_codes = $item->locations->pluck('code')->join(', ');
+                return $item;
+            });
 
         return response()->json($items);
     }

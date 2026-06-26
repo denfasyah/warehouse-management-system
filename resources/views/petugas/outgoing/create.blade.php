@@ -172,7 +172,7 @@
                         searchResults.classList.remove('hidden');
                         
                         availableItems.forEach(item => {
-                            const locationCode = item.location ? item.location.code : '-';
+                            const locationCode = item.locations_codes || '-';
                             const categoryName = item.category ? item.category.name : '-';
                             
                             const div = document.createElement('div');
@@ -216,7 +216,7 @@
         // Update DOM
         displayItemName.textContent = item.name;
         displayItemSku.textContent = 'SKU: ' + item.sku;
-        displayItemLocation.textContent = 'Lokasi Rak: ' + (item.location ? item.location.code : '-');
+        displayItemLocation.textContent = 'Lokasi: ' + (item.locations_codes || '-');
         displayItemStock.textContent = 'Sisa Stok: ' + item.stock;
         displayItemStock.className = 'text-xs bg-emerald-50 border border-emerald-200 text-emerald-700 px-2 py-1 rounded font-bold';
         displayItemUnit.textContent = item.unit;
