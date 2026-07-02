@@ -25,7 +25,6 @@
             <thead>
                 <tr class="bg-gray-50/50 border-b border-gray-100">
                     <th class="px-6 py-4 text-xs font-label-md text-gray-500 uppercase tracking-wider">Nama & Email</th>
-                    <th class="px-6 py-4 text-xs font-label-md text-gray-500 uppercase tracking-wider">Sektor Gudang</th>
                     <th class="px-6 py-4 text-xs font-label-md text-gray-500 uppercase tracking-wider">No. HP</th>
                     <th class="px-6 py-4 text-xs font-label-md text-gray-500 uppercase tracking-wider text-center">Status Akun</th>
                     <th class="px-6 py-4 text-xs font-label-md text-gray-500 uppercase tracking-wider text-right">Aksi</th>
@@ -42,13 +41,6 @@
                             <p class="text-sm font-semibold text-gray-800">{{ $user->name }}</p>
                             <p class="text-[11px] text-gray-500">{{ $user->email }}</p>
                         </div>
-                    </td>
-                    <td class="px-6 py-4">
-                        @if($user->warehouse_sector)
-                            <span class="px-2.5 py-1 bg-gray-100 text-gray-700 rounded-md text-xs font-medium">{{ $user->warehouse_sector }}</span>
-                        @else
-                            <span class="text-xs text-gray-400 italic">Belum ditentukan</span>
-                        @endif
                     </td>
                     <td class="px-6 py-4 text-sm text-gray-600">
                         {{ $user->phone ?? '-' }}
@@ -101,20 +93,9 @@
                             <label class="block text-sm font-semibold text-gray-700 mb-1">Alamat Email <span class="text-red-500">*</span></label>
                             <input type="email" name="email" value="{{ old('email', $user->email) }}" required class="w-full rounded-lg border-gray-300 focus:border-primary focus:ring focus:ring-primary/20 text-sm">
                         </div>
-                        <div class="grid grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-sm font-semibold text-gray-700 mb-1">Nomor HP</label>
-                                <input type="text" name="phone" value="{{ old('phone', $user->phone) }}" class="w-full rounded-lg border-gray-300 focus:border-primary focus:ring focus:ring-primary/20 text-sm">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-semibold text-gray-700 mb-1">Sektor Gudang</label>
-                                <select name="warehouse_sector" class="w-full rounded-lg border-gray-300 focus:border-primary focus:ring focus:ring-primary/20 text-sm">
-                                    <option value="">Pilih Sektor (Opsional)</option>
-                                    <option value="Zona A" {{ old('warehouse_sector', $user->warehouse_sector) == 'Zona A' ? 'selected' : '' }}>Zona A</option>
-                                    <option value="Zona B" {{ old('warehouse_sector', $user->warehouse_sector) == 'Zona B' ? 'selected' : '' }}>Zona B</option>
-                                    <option value="Zona C" {{ old('warehouse_sector', $user->warehouse_sector) == 'Zona C' ? 'selected' : '' }}>Zona C</option>
-                                </select>
-                            </div>
+                        <div class="mb-4">
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">Nomor HP</label>
+                            <input type="text" name="phone" value="{{ old('phone', $user->phone) }}" class="w-full rounded-lg border-gray-300 focus:border-primary focus:ring focus:ring-primary/20 text-sm">
                         </div>
                         
                         <div class="p-3 bg-blue-50 rounded-lg border border-blue-100">
@@ -167,20 +148,9 @@
             <label class="block text-sm font-semibold text-gray-700 mb-1">Alamat Email <span class="text-red-500">*</span></label>
             <input type="email" name="email" value="{{ old('email') }}" required class="w-full rounded-lg border-gray-300 focus:border-primary focus:ring focus:ring-primary/20 text-sm">
         </div>
-        <div class="grid grid-cols-2 gap-4">
-            <div>
-                <label class="block text-sm font-semibold text-gray-700 mb-1">Nomor HP</label>
-                <input type="text" name="phone" value="{{ old('phone') }}" class="w-full rounded-lg border-gray-300 focus:border-primary focus:ring focus:ring-primary/20 text-sm">
-            </div>
-            <div>
-                <label class="block text-sm font-semibold text-gray-700 mb-1">Sektor Gudang</label>
-                <select name="warehouse_sector" class="w-full rounded-lg border-gray-300 focus:border-primary focus:ring focus:ring-primary/20 text-sm">
-                    <option value="" selected>Pilih Sektor (Opsional)</option>
-                    <option value="Zona A" {{ old('warehouse_sector') == 'Zona A' ? 'selected' : '' }}>Zona A</option>
-                    <option value="Zona B" {{ old('warehouse_sector') == 'Zona B' ? 'selected' : '' }}>Zona B</option>
-                    <option value="Zona C" {{ old('warehouse_sector') == 'Zona C' ? 'selected' : '' }}>Zona C</option>
-                </select>
-            </div>
+        <div class="mb-4">
+            <label class="block text-sm font-semibold text-gray-700 mb-1">Nomor HP</label>
+            <input type="text" name="phone" value="{{ old('phone') }}" class="w-full rounded-lg border-gray-300 focus:border-primary focus:ring focus:ring-primary/20 text-sm">
         </div>
         
         <div class="grid grid-cols-2 gap-4 mt-2">

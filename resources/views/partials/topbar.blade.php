@@ -105,7 +105,7 @@
                     <p class="text-[10px] text-primary font-bold uppercase mt-0.5 tracking-wider">@yield('role', 'ADMIN')</p>
                 </div>
                 
-                <a href="#" class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-primary transition-colors">
+                <a href="{{ route('profile.index') }}" class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-primary transition-colors">
                     <span class="material-symbols-outlined text-[18px]">person</span> Profil Saya
                 </a>
                 

@@ -21,6 +21,7 @@ class DatabaseSeeder extends Seeder
             LocationSeeder::class,
             ItemSeeder::class,
             SettingSeeder::class,
+            HistoricalTransactionSeeder::class,
         ]);
     }
 }

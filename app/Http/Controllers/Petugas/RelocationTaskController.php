@@ -30,11 +30,13 @@ class RelocationTaskController extends Controller
             return redirect()->back()->with('error', 'Tugas ini sudah selesai atau dibatalkan.');
         }
 
-        DB::transaction(function () use ($task) {
-            $item        = $task->item;
-            $fromLocId   = $task->from_location_id;
-            $toLocId     = $task->to_location_id;
-            $qty         = $task->quantity;
+        $messages = [];
+
+        DB::transaction(function () use ($task, &$messages) {
+            $item      = $task->item;
+            $fromLocId = $task->from_location_id;
+            $toLocId   = $task->to_location_id;
+            $qty       = $task->quantity;
 
             // --- 1. Kurangi pivot quantity di lokasi ASAL ---
             $fromPivot = DB::table('item_location')
@@ -56,31 +58,80 @@ class RelocationTaskController extends Controller
                         ->update(['quantity' => $newFromQty, 'updated_at' => now()]);
                 }
             }
+            Location::syncFill($fromLocId);
 
-            // --- 2. Tambah/buat pivot quantity di lokasi TUJUAN ---
-            $toPivot = DB::table('item_location')
-                ->where('item_id', $item->id)
-                ->where('location_id', $toLocId)
-                ->first();
+            // --- 2. Cek kapasitas lokasi TUJUAN (BEST PRACTICE: selalu cek sebelum commit) ---
+            $toLoc      = Location::find($toLocId);
+            $freshFill  = DB::table('item_location')->where('location_id', $toLocId)->sum('quantity');
+            $spaceLeft  = $toLoc->capacity - $freshFill;
 
-            if ($toPivot) {
-                DB::table('item_location')
-                    ->where('item_id', $item->id)
-                    ->where('location_id', $toLocId)
-                    ->update(['quantity' => $toPivot->quantity + $qty, 'updated_at' => now()]);
-            } else {
-                DB::table('item_location')->insert([
-                    'item_id'     => $item->id,
-                    'location_id' => $toLocId,
-                    'quantity'    => $qty,
-                    'created_at'  => now(),
-                    'updated_at'  => now(),
-                ]);
+            // Batasi: khusus BLK, anggap selalu ada ruang
+            $isBulk = $toLoc->zone === 'BLK' || $toLoc->storage_class === 'general';
+            if ($isBulk) {
+                $spaceLeft = $qty; // Bulk selalu muat
             }
 
-            // --- 3. Sinkronisasi current_fill kedua lokasi ---
-            Location::syncFill($fromLocId);
-            Location::syncFill($toLocId);
+            $qtyFitsTarget = min($qty, max(0, $spaceLeft));
+            $qtyOverflow   = $qty - $qtyFitsTarget;
+
+            // Masukkan yang muat ke lokasi tujuan
+            if ($qtyFitsTarget > 0) {
+                $toPivot = DB::table('item_location')
+                    ->where('item_id', $item->id)
+                    ->where('location_id', $toLocId)
+                    ->first();
+
+                if ($toPivot) {
+                    DB::table('item_location')
+                        ->where('item_id', $item->id)
+                        ->where('location_id', $toLocId)
+                        ->update(['quantity' => $toPivot->quantity + $qtyFitsTarget, 'updated_at' => now()]);
+                } else {
+                    DB::table('item_location')->insert([
+                        'item_id'     => $item->id,
+                        'location_id' => $toLocId,
+                        'quantity'    => $qtyFitsTarget,
+                        'created_at'  => now(),
+                        'updated_at'  => now(),
+                    ]);
+                }
+                Location::syncFill($toLocId);
+            }
+
+            // --- 3. Overflow → Redirect otomatis ke BLK ---
+            if ($qtyOverflow > 0) {
+                // Cari BLK dengan sisa terbesar (paling longgar)
+                $bulkLoc = Location::where(function($q) {
+                        $q->where('storage_class', 'general')->orWhere('zone', 'BLK');
+                    })
+                    ->orderByRaw('(capacity - current_fill) DESC')
+                    ->first();
+
+                if ($bulkLoc) {
+                    $bulkPivot = DB::table('item_location')
+                        ->where('item_id', $item->id)
+                        ->where('location_id', $bulkLoc->id)
+                        ->first();
+
+                    if ($bulkPivot) {
+                        DB::table('item_location')
+                            ->where('item_id', $item->id)
+                            ->where('location_id', $bulkLoc->id)
+                            ->update(['quantity' => $bulkPivot->quantity + $qtyOverflow, 'updated_at' => now()]);
+                    } else {
+                        DB::table('item_location')->insert([
+                            'item_id'     => $item->id,
+                            'location_id' => $bulkLoc->id,
+                            'quantity'    => $qtyOverflow,
+                            'created_at'  => now(),
+                            'updated_at'  => now(),
+                        ]);
+                    }
+                    Location::syncFill($bulkLoc->id);
+
+                    $messages[] = "⚠️ {$qtyOverflow} pcs sisanya tidak muat di {$toLoc->code}, otomatis disimpan di zona bulk {$bulkLoc->code}.";
+                }
+            }
 
             // --- 4. Update status tugas menjadi completed ---
             $task->update([
@@ -90,7 +141,12 @@ class RelocationTaskController extends Controller
             ]);
         });
 
+        $successMsg = "✅ Barang berhasil dipindahkan! Lokasi stok telah diperbarui.";
+        if (!empty($messages)) {
+            $successMsg .= " " . implode(' ', $messages);
+        }
+
         return redirect()->route('petugas.relocationTasks.index')
-            ->with('success', "Barang berhasil dipindahkan! Lokasi stok telah diperbarui secara otomatis.");
+            ->with('success', $successMsg);
     }
 }

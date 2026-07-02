@@ -49,7 +49,7 @@
 </a>
 
 {{-- === RIWAYAT AKTIVITAS === --}}
-<a href="#" class="mt-1 flex items-center gap-2.5 px-3 py-2 text-white/60 hover:bg-white/5 hover:text-white rounded-lg text-sm transition-all font-medium">
-    <span class="material-symbols-outlined text-[18px]">history</span>
+<a href="{{ route('petugas.activities.index') }}" class="mt-1 flex items-center gap-2.5 px-3 py-2 {{ request()->routeIs('petugas.activities.*') ? 'bg-white/10 text-white font-semibold' : 'text-white/60 hover:bg-white/5 hover:text-white font-medium' }} rounded-lg text-sm transition-all">
+    <span class="material-symbols-outlined text-[18px]" style="{{ request()->routeIs('petugas.activities.*') ? 'font-variation-settings: \'FILL\' 1;' : '' }}">history</span>
     <span>Riwayat Aktivitas</span>
 </a>

@@ -30,15 +30,17 @@
         </div>
         
         <!-- User Profile Area (Bottom Sidebar) -->
-        <div class="mt-6 px-2 pt-4 border-t border-white/10 relative group">
+        <div class="mt-6 px-2 pt-4 border-t border-white/10">
             <div class="flex items-center gap-3">
-                <div class="w-9 h-9 rounded-full bg-surface-container-high flex-shrink-0 border border-white/20">
-                    <img class="w-full h-full rounded-full object-cover" src="https://ui-avatars.com/api/?name={{ urlencode(auth()->user()->name ?? 'User') }}&background=random" alt="Profile">
-                </div>
-                <div class="overflow-hidden flex-1">
-                    <p class="text-sm font-semibold truncate text-white">{{ auth()->user()->name ?? 'User Name' }}</p>
-                    <p class="text-[10px] opacity-70 truncate">{{ auth()->user()->email ?? 'user@indoone.com' }}</p>
-                </div>
+                <a href="{{ route('profile.index') }}" class="flex items-center gap-3 flex-1 min-w-0 group/profile rounded-lg hover:bg-white/10 p-1 -m-1 transition-colors">
+                    <div class="w-9 h-9 rounded-full bg-surface-container-high flex-shrink-0 border border-white/20 overflow-hidden">
+                        <img class="w-full h-full rounded-full object-cover" src="https://ui-avatars.com/api/?name={{ urlencode(auth()->user()->name ?? 'User') }}&background=E5EEFF&color=181c61" alt="Profile">
+                    </div>
+                    <div class="overflow-hidden flex-1">
+                        <p class="text-sm font-semibold truncate text-white group-hover/profile:text-secondary-container transition-colors">{{ auth()->user()->name ?? 'User Name' }}</p>
+                        <p class="text-[10px] opacity-70 truncate">{{ ucfirst(auth()->user()->role ?? 'user') }}</p>
+                    </div>
+                </a>
                 <form id="logout-form-sidebar" action="{{ route('logout') }}" method="POST" class="ml-auto">
                     @csrf
                     <button type="button" onclick="confirmLogout('logout-form-sidebar')" class="w-8 h-8 rounded hover:bg-white/10 flex items-center justify-center text-white/70 hover:text-white transition-colors" title="Logout">

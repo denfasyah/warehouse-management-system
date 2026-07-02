@@ -18,53 +18,84 @@ class ItemSeeder extends Seeder
         // Ambil semua lokasi, index by code
         $locs = Location::all()->keyBy('code');
 
+        /**
+         * BEST PRACTICE: Tiap barang sudah ditempatkan di zona yang SESUAI kelas CBS-nya sejak awal.
+         *  - Fast Moving → Zona A (A-01..A-04) | max 2500 per rak
+         *  - Medium Moving → Zona B (B-01..B-04) | max 2500 per rak
+         *  - Slow Moving → Zona C (C-01..C-04) | max 2500 per rak
+         *  - Overflow apapun → BLK (kapasitas besar)
+         *
+         * Dengan begitu, saat CBS recalculate, tidak akan ada "mismatch" yang besar
+         * dan tugas relokasi hanya dibuat jika benar-benar bergeser kelas.
+         *
+         * Format: ['name', stock, storage_class, [kode_lokasi => qty, ...]]
+         * Catatan: total qty di semua locs HARUS = stock
+         */
         $items = [
-            // Format: [nama, stok, [kode_lokasi => qty, ...]]
+            // ===== FAST MOVING (Zona A) =====
             [
-                'name'  => 'Transmisi Oil',
-                'stock' => 3241,
-                // A-01 penuh (2500), sisanya (741) ke BLK-01
-                'locs'  => ['A-01' => 2500, 'BLK-01' => 741],
+                'name'          => 'Engine Oil',
+                'stock'         => 6500,
+                'storage_class' => 'fast',
+                // Picking: A-01 (2500) + A-02 (2500) | Overflow: BLK-01 (1500)
+                'locs'          => ['A-01' => 2500, 'A-02' => 2500, 'BLK-01' => 1500],
             ],
             [
-                'name'  => 'Gear Oil',
-                'stock' => 624,
-                // Muat di A-02 saja (< 2500)
-                'locs'  => ['A-02' => 624],
+                'name'          => 'Brake Fluid',
+                'stock'         => 2200,
+                'storage_class' => 'fast',
+                // Muat di A-03 saja (< 2500)
+                'locs'          => ['A-03' => 2200],
             ],
             [
-                'name'  => 'Brake Fluid',
-                'stock' => 1044,
-                // Muat di A-03 saja
-                'locs'  => ['A-03' => 1044],
+                'name'          => 'Brake Pad',
+                'stock'         => 4800,
+                'storage_class' => 'fast',
+                // Picking: A-04 (2500) | Overflow: BLK-01 (2300)
+                'locs'          => ['A-04' => 2500, 'BLK-01' => 2300],
+            ],
+
+            // ===== MEDIUM MOVING (Zona B) =====
+            [
+                'name'          => 'Brake Disc',
+                'stock'         => 2100,
+                'storage_class' => 'medium',
+                // Muat di B-01 saja (< 2500)
+                'locs'          => ['B-01' => 2100],
             ],
             [
-                'name'  => 'Brake Disc',
-                'stock' => 967,
-                // Muat di A-04 saja
-                'locs'  => ['A-04' => 967],
+                'name'          => 'Gear Oil',
+                'stock'         => 1800,
+                'storage_class' => 'medium',
+                // Muat di B-02 saja (< 2500)
+                'locs'          => ['B-02' => 1800],
+            ],
+
+            // ===== SLOW MOVING (Zona C) =====
+            [
+                'name'          => 'Transmisi Oil',
+                'stock'         => 1400,
+                'storage_class' => 'slow',
+                // Muat di C-01 saja (< 2500)
+                'locs'          => ['C-01' => 1400],
             ],
             [
-                'name'  => 'Brake Pad',
-                'stock' => 4655,
-                // B-01 penuh (2500), sisanya (2155) ke BLK-01
-                'locs'  => ['B-01' => 2500, 'BLK-01' => 2155],
-            ],
-            [
-                'name'  => 'Battery',
-                'stock' => 4821,
-                // B-02 penuh (2500), sisanya (2321) ke BLK-01
-                'locs'  => ['B-02' => 2500, 'BLK-01' => 2321],
-            ],
-            [
-                'name'  => 'Engine Oil',
-                'stock' => 56293,
-                // C-01 (2500) + C-02 (2500) picking, sisanya (51293) ke BLK-02
-                'locs'  => ['C-01' => 2500, 'C-02' => 2500, 'BLK-02' => 51293],
+                'name'          => 'Battery',
+                'stock'         => 900,
+                'storage_class' => 'slow',
+                // Muat di C-02 saja (< 2500)
+                'locs'          => ['C-02' => 900],
             ],
         ];
 
         foreach ($items as $itemData) {
+            // Validasi: total qty di locs harus = stock
+            $totalLocQty = array_sum($itemData['locs']);
+            if ($totalLocQty !== $itemData['stock']) {
+                $this->command->error("⚠️  Mismatch qty untuk {$itemData['name']}: stock={$itemData['stock']} tapi total locs={$totalLocQty}. Dikoreksi otomatis.");
+                $itemData['stock'] = $totalLocQty;
+            }
+
             $item = Item::create([
                 'category_id'   => $cat->id,
                 'name'          => $itemData['name'],
@@ -74,17 +105,30 @@ class ItemSeeder extends Seeder
                 'unit'          => 'pcs',
                 'stock'         => $itemData['stock'],
                 'min_stock'     => 10,
-                'storage_class' => 'unclassified',
+                'storage_class' => $itemData['storage_class'], // Sudah diklasifikasikan
                 'description'   => 'Deskripsi untuk ' . $itemData['name'],
             ]);
 
-            // Attach ke lokasi dengan quantity yang sudah ditentukan
+            // Validasi kapasitas tiap rak sebelum attach
             $attachData = [];
             foreach ($itemData['locs'] as $code => $qty) {
                 $loc = $locs->get($code);
-                if ($loc) {
-                    $attachData[$loc->id] = ['quantity' => $qty];
+                if (!$loc) {
+                    $this->command->warn("Lokasi {$code} tidak ditemukan, dilewati.");
+                    continue;
                 }
+
+                // Pastikan qty tidak melebihi kapasitas rak (kecuali BLK)
+                $isBulk     = $loc->zone === 'BLK' || $loc->storage_class === 'general';
+                $locFillSoFar = DB::table('item_location')->where('location_id', $loc->id)->sum('quantity');
+                $maxQty     = $isBulk ? $qty : min($qty, $loc->capacity - $locFillSoFar);
+
+                if ($maxQty <= 0) {
+                    $this->command->warn("Rak {$code} sudah penuh saat seeding {$item->name}. Dilewati.");
+                    continue;
+                }
+
+                $attachData[$loc->id] = ['quantity' => $maxQty];
             }
 
             if (!empty($attachData)) {
@@ -100,5 +144,7 @@ class ItemSeeder extends Seeder
                 ->sum('quantity');
             $loc->update(['current_fill' => $totalQty]);
         });
+
+        $this->command->info('✅ ItemSeeder selesai. Semua rak dalam kapasitas normal.');
     }
 }

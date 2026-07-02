@@ -57,6 +57,8 @@ class CBSController extends Controller
         $generatedCount = 0;
 
         DB::transaction(function () use ($items, &$generatedCount) {
+            $virtualFills = []; // Untuk melacak kapasitas virtual selama batch ini
+            
             foreach ($items as $item) {
                 // Cek apakah sudah ada tugas pending untuk item ini (jangan dobel)
                 $alreadyPending = RelocationTask::pending()->where('item_id', $item->id)->exists();
@@ -64,27 +66,74 @@ class CBSController extends Controller
                     continue;
                 }
 
-                $suggestions = \App\Services\CBSService::suggestLocations($item);
-                if ($suggestions->isEmpty()) {
-                    continue;
-                }
-
-                $targetLocation = $suggestions->first();
-
-                // Buat satu tugas per lokasi asal yang tidak sesuai
+                // Buat tugas untuk setiap lokasi asal yang tidak sesuai
                 foreach ($item->locations as $currentLoc) {
                     if ($currentLoc->storage_class === 'general' || $currentLoc->is_bulk_zone) {
-                        continue;
+                        continue; // Biarkan kalau sudah di BLK/General
                     }
                     if ($currentLoc->storage_class !== $item->storage_class) {
-                        RelocationTask::create([
-                            'item_id'          => $item->id,
-                            'from_location_id' => $currentLoc->id,
-                            'to_location_id'   => $targetLocation->id,
-                            'quantity'         => $currentLoc->pivot->quantity,
-                            'status'           => 'pending',
-                        ]);
-                        $generatedCount++;
+                        $qtyToMove = $currentLoc->pivot->quantity;
+
+                        while ($qtyToMove > 0) {
+                            // Cari lokasi tujuan yang kelasnya sesuai dan MASIH ADA sisa kapasitas
+                            $targetLocs = Location::where('storage_class', $item->storage_class)
+                                ->where('id', '!=', $currentLoc->id)
+                                ->get();
+                                
+                            $foundTarget = null;
+                            $spaceAvailable = 0;
+                            
+                            foreach($targetLocs as $tl) {
+                                $currentFill = $virtualFills[$tl->id] ?? $tl->current_fill;
+                                $space = $tl->capacity - $currentFill;
+                                if ($space > 0) {
+                                    $foundTarget = $tl;
+                                    $spaceAvailable = $space;
+                                    break;
+                                }
+                            }
+                            
+                            // Jika semua lokasi kelas tersebut penuh, lempar ke BLK/General
+                            if (!$foundTarget) {
+                                $fallbackLocs = Location::where('storage_class', 'general')
+                                    ->orWhere('zone', 'BLK')
+                                    ->get();
+                                foreach($fallbackLocs as $fl) {
+                                    $currentFill = $virtualFills[$fl->id] ?? $fl->current_fill;
+                                    $space = $fl->capacity - $currentFill;
+                                    if ($space > 0) {
+                                        $foundTarget = $fl;
+                                        $spaceAvailable = $space;
+                                        break;
+                                    }
+                                }
+                            }
+                            
+                            // Jika gudang benar-benar full 100%, terpaksa tumpuk di BLK
+                            if (!$foundTarget) {
+                                $foundTarget = Location::where('zone', 'BLK')->first();
+                                $spaceAvailable = $qtyToMove; // paksa semuanya ke sini
+                            }
+                            
+                            $qtyForThisTask = min($qtyToMove, $spaceAvailable);
+                            
+                            RelocationTask::create([
+                                'item_id'          => $item->id,
+                                'from_location_id' => $currentLoc->id,
+                                'to_location_id'   => $foundTarget->id,
+                                'quantity'         => $qtyForThisTask,
+                                'status'           => 'pending',
+                            ]);
+                            $generatedCount++;
+                            
+                            // Catat virtual fill agar task berikutnya tidak mengisi tempat yang sudah di-booking
+                            if (!isset($virtualFills[$foundTarget->id])) {
+                                $virtualFills[$foundTarget->id] = $foundTarget->current_fill;
+                            }
+                            $virtualFills[$foundTarget->id] += $qtyForThisTask;
+                            
+                            $qtyToMove -= $qtyForThisTask;
+                        }
                     }
                 }
             }

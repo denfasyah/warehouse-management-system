@@ -27,7 +27,6 @@ class UserRequest extends FormRequest
                 Rule::unique('users')->ignore($userId)
             ],
             'phone' => ['nullable', 'string', 'max:20'],
-            'warehouse_sector' => ['nullable', 'string', 'max:100'],
             'is_active' => ['boolean'],
         ];
 

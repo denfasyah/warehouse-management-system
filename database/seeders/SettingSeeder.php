@@ -12,7 +12,7 @@ class SettingSeeder extends Seeder
         DB::table('settings')->insert([
             [
                 'key' => 'cbs_fast_threshold',
-                'value' => '50',
+                'value' => '500',
                 'label' => 'Batas Frekuensi Fast Moving',
                 'description' => 'Barang dengan frekuensi pengeluaran >= nilai ini dalam 30 hari masuk kelas Fast.',
                 'created_at' => now(),
@@ -20,7 +20,7 @@ class SettingSeeder extends Seeder
             ],
             [
                 'key' => 'cbs_medium_threshold',
-                'value' => '10',
+                'value' => '100',
                 'label' => 'Batas Frekuensi Medium Moving',
                 'description' => 'Barang dengan frekuensi pengeluaran >= nilai ini dan < batas Fast masuk kelas Medium.',
                 'created_at' => now(),

@@ -16,7 +16,6 @@ class User extends Authenticatable
         'password',
         'role',
         'phone',
-        'warehouse_sector',
         'is_active',
     ];
 

@@ -16,6 +16,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/notifications', [\App\Http\Controllers\NotificationController::class, 'index'])->name('notifications.index');
     Route::get('/notifications/unread-count', [\App\Http\Controllers\NotificationController::class, 'unreadCount'])->name('notifications.unreadCount');
     Route::post('/notifications/read-all', [\App\Http\Controllers\NotificationController::class, 'markAllRead'])->name('notifications.readAll');
+    // Profile Routes
+    Route::get('/profile', [\App\Http\Controllers\ProfileController::class, 'index'])->name('profile.index');
+    Route::put('/profile', [\App\Http\Controllers\ProfileController::class, 'update'])->name('profile.update');
 });
 
 // ADMIN ROUTES
@@ -50,6 +53,21 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::get('cbs/mapping', [\App\Http\Controllers\Admin\CBSController::class, 'mapping'])->name('cbs.mapping');
     Route::get('cbs/relocation-tasks', [\App\Http\Controllers\Admin\CBSController::class, 'relocationTasks'])->name('cbs.relocationTasks');
     Route::post('cbs/relocation-tasks/{task}/cancel', [\App\Http\Controllers\Admin\CBSController::class, 'cancelTask'])->name('cbs.cancelTask');
+
+    // Reports
+    Route::prefix('reports')->name('reports.')->group(function () {
+        Route::get('stock', [\App\Http\Controllers\Admin\ReportController::class, 'stockReport'])->name('stock');
+        Route::get('stock/pdf', [\App\Http\Controllers\Admin\ReportController::class, 'exportStockPdf'])->name('stock.pdf');
+        
+        Route::get('incoming', [\App\Http\Controllers\Admin\ReportController::class, 'incomingReport'])->name('incoming');
+        Route::get('incoming/pdf', [\App\Http\Controllers\Admin\ReportController::class, 'exportIncomingPdf'])->name('incoming.pdf');
+        
+        Route::get('outgoing', [\App\Http\Controllers\Admin\ReportController::class, 'outgoingReport'])->name('outgoing');
+        Route::get('outgoing/pdf', [\App\Http\Controllers\Admin\ReportController::class, 'exportOutgoingPdf'])->name('outgoing.pdf');
+        
+        Route::get('storage', [\App\Http\Controllers\Admin\ReportController::class, 'storageReport'])->name('storage');
+        Route::get('storage/pdf', [\App\Http\Controllers\Admin\ReportController::class, 'exportStoragePdf'])->name('storage.pdf');
+    });
 });
 
 // PETUGAS ROUTES
@@ -119,4 +137,7 @@ Route::middleware(['auth', 'role:petugas'])->prefix('petugas')->name('petugas.')
     // Tugas Relokasi untuk Petugas
     Route::get('relocation-tasks', [\App\Http\Controllers\Petugas\RelocationTaskController::class, 'index'])->name('relocationTasks.index');
     Route::post('relocation-tasks/{task}/complete', [\App\Http\Controllers\Petugas\RelocationTaskController::class, 'complete'])->name('relocationTasks.complete');
+
+    // Riwayat Aktivitas
+    Route::get('activities', [\App\Http\Controllers\Petugas\ActivityController::class, 'index'])->name('activities.index');
 });

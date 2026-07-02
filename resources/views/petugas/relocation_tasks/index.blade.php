@@ -100,10 +100,10 @@
 
             {{-- Action Button --}}
             <div class="shrink-0 flex flex-col gap-2">
-                <form action="{{ route('petugas.relocationTasks.complete', $task) }}" method="POST">
+                <form id="complete-task-{{ $task->id }}" action="{{ route('petugas.relocationTasks.complete', $task) }}" method="POST">
                     @csrf
-                    <button type="submit"
-                        onclick="return confirm('Konfirmasi: Anda sudah memindahkan {{ $task->quantity }} pcs {{ $task->item->name }} dari Rak {{ $task->fromLocation->code }} ke Rak {{ $task->toLocation->code }} secara fisik?\n\nSetelah dikonfirmasi, sistem akan otomatis memperbarui lokasi stok barang.')"
+                    <button type="button"
+                        onclick="confirmTask('complete-task-{{ $task->id }}', '{{ $task->quantity }}', '{{ $task->item->name }}', '{{ $task->fromLocation->code }}', '{{ $task->toLocation->code }}')"
                         class="w-full sm:w-auto px-6 py-3 bg-primary text-white rounded-xl font-bold text-sm inline-flex items-center gap-2 hover:opacity-90 active:scale-95 transition-all shadow-sm">
                         <span class="material-symbols-outlined text-[20px]">check_circle</span>
                         Selesai Dipindah
@@ -127,5 +127,30 @@
     {{ $tasks->links() }}
 </div>
 @endif
+
+<script>
+function confirmTask(formId, qty, itemName, fromLoc, toLoc) {
+    Swal.fire({
+        title: 'Konfirmasi Relokasi',
+        html: `Anda sudah memindahkan <b>${qty} pcs ${itemName}</b> dari Rak <b>${fromLoc}</b> ke Rak <b>${toLoc}</b> secara fisik?<br><br><span class="text-xs text-gray-500">Setelah dikonfirmasi, sistem akan otomatis memperbarui lokasi stok barang.</span>`,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#181c61', // primary color
+        cancelButtonColor: '#e0e3e5',
+        confirmButtonText: 'Ya, Sudah Dipindah',
+        cancelButtonText: '<span class="text-gray-700">Belum</span>',
+        customClass: {
+            popup: 'rounded-2xl shadow-xl border border-gray-100',
+            title: 'font-headline-md text-gray-800',
+            confirmButton: 'rounded-lg px-6',
+            cancelButton: 'rounded-lg px-6'
+        }
+    }).then((result) => {
+        if (result.isConfirmed) {
+            document.getElementById(formId).submit();
+        }
+    })
+}
+</script>
 
 @endsection

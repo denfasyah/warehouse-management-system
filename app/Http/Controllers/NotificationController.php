@@ -8,20 +8,34 @@ use Illuminate\Http\Request;
 class NotificationController extends Controller
 {
     /**
-     * Tampilkan semua notifikasi untuk user yang sedang login.
+     * Tampilkan halaman notifikasi dengan filter dan pagination.
+     * Tidak auto-mark-all-read — biarkan user yang memilih.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $notifications = auth()->user()->notifications()->paginate(20);
+        $query = auth()->user()->notifications();
 
-        // Otomatis tandai semua sebagai dibaca ketika halaman ini diakses
-        auth()->user()->unreadNotifications()->update(['read_at' => now()]);
+        // Filter: status baca
+        $filter = $request->input('filter', 'all'); // all | unread | read
+        if ($filter === 'unread') {
+            $query->whereNull('read_at');
+        } elseif ($filter === 'read') {
+            $query->whereNotNull('read_at');
+        }
 
-        return view('notifications.index', compact('notifications'));
+        // Filter: tipe notifikasi
+        $type = $request->input('type'); // approved | rejected | info
+        if ($type) {
+            $query->where('type', $type);
+        }
+
+        $notifications = $query->paginate(15)->withQueryString();
+
+        return view('notifications.index', compact('notifications', 'filter'));
     }
 
     /**
-     * Endpoint untuk API polling (mengambil jumlah unread)
+     * Endpoint API polling — mengambil jumlah unread.
      */
     public function unreadCount()
     {
@@ -30,7 +44,7 @@ class NotificationController extends Controller
     }
 
     /**
-     * Endpoint untuk menandai semua notifikasi sebagai telah dibaca
+     * Tandai semua notifikasi sebagai telah dibaca.
      */
     public function markAllRead()
     {
