@@ -102,13 +102,37 @@ class ReportController extends Controller
 
     public function storageReport(Request $request)
     {
-        $locations = Location::all();
-        return view('admin.reports.storage', compact('locations'));
+        // Sync current_fill dari pivot agar data akurat sebelum ditampilkan
+        $locationIds = \App\Models\Location::pluck('id')->toArray();
+        \App\Models\Location::syncFill($locationIds);
+
+        $query = Location::with(['items' => function($q) {
+            $q->withPivot('quantity');
+        }]);
+
+        if ($request->zone) {
+            $query->where('zone', $request->zone);
+        }
+        if ($request->status === 'over') {
+            $query->whereColumn('current_fill', '>', 'capacity');
+        } elseif ($request->status === 'full') {
+            $query->whereColumn('current_fill', '>=', 'capacity');
+        } elseif ($request->status === 'empty') {
+            $query->where('current_fill', 0);
+        }
+
+        $locations = $query->orderBy('zone')->orderBy('code')->get();
+        $zones     = Location::distinct()->pluck('zone')->sort()->values();
+
+        return view('admin.reports.storage', compact('locations', 'zones'));
     }
 
     public function exportStoragePdf(Request $request)
     {
-        $locations = Location::all();
+        $locationIds = \App\Models\Location::pluck('id')->toArray();
+        \App\Models\Location::syncFill($locationIds);
+        $locations = Location::with(['items' => fn($q) => $q->withPivot('quantity')])
+            ->orderBy('zone')->orderBy('code')->get();
         $pdf = Pdf::loadView('admin.reports.pdf.storage-pdf', compact('locations'));
         return $pdf->download('laporan-storage.pdf');
     }

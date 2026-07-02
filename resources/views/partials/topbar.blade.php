@@ -6,10 +6,10 @@
             <span class="material-symbols-outlined">menu</span>
         </button>
 
-        <div class="relative w-full max-w-md hidden md:block">
+        <form action="{{ route('search') }}" method="GET" class="relative w-full max-w-md hidden md:block">
             <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-xl text-gray-400">search</span>
-            <input class="w-full bg-gray-50 border border-gray-200 rounded-xl py-2 pl-10 pr-4 text-sm focus:ring-2 focus:ring-primary focus:border-primary transition-all focus:bg-white" placeholder="Cari SKU, nama barang, atau kode rak..." type="text">
-        </div>
+            <input name="q" value="{{ request('q') }}" class="w-full bg-gray-50 border border-gray-200 rounded-xl py-2 pl-10 pr-4 text-sm focus:ring-2 focus:ring-primary focus:border-primary transition-all focus:bg-white" placeholder="Cari SKU, nama barang, atau kode rak..." type="text">
+        </form>
     </div>
     
     <div class="flex items-center gap-2 md:gap-4">

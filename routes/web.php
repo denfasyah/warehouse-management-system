@@ -19,13 +19,18 @@ Route::middleware('auth')->group(function () {
     // Profile Routes
     Route::get('/profile', [\App\Http\Controllers\ProfileController::class, 'index'])->name('profile.index');
     Route::put('/profile', [\App\Http\Controllers\ProfileController::class, 'update'])->name('profile.update');
+
+    // Global Search
+    Route::get('/search', [\App\Http\Controllers\SearchController::class, 'index'])->name('search');
 });
 
 // ADMIN ROUTES
 Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
-    Route::get('/dashboard', function () {
-        $stats = \App\Services\CBSService::getDashboardStats();
-        return view('admin.dashboard', compact('stats'));
+    Route::get('/dashboard', function (\Illuminate\Http\Request $request) {
+        $period = (int) $request->input('period', 7); // 1, 7, 30
+        if (!in_array($period, [1, 7, 30])) $period = 7;
+        $stats = \App\Services\CBSService::getDashboardStatsByPeriod($period);
+        return view('admin.dashboard', compact('stats', 'period'));
     })->name('dashboard');
 
     // Master Data

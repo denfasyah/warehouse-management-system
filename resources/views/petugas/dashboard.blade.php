@@ -11,11 +11,11 @@
 <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 mb-5">
     <div>
         <h2 class="text-xl font-bold text-gray-800 tracking-tight">Halo, {{ auth()->user()->name }}! 👋</h2>
-        <p class="text-sm text-gray-500 mt-0.5">Sesi aktif di Gudang Sektor B-4 sedang berjalan.</p>
+        <p class="text-sm text-gray-500 mt-0.5">Sesi aktif hari {{ now()->translatedFormat('l, d F Y') }}.</p>
     </div>
     <div class="px-3 py-1.5 bg-green-50 text-green-700 border border-green-200 rounded-full flex items-center gap-1.5 text-xs font-semibold self-start sm:self-auto">
         <div class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></div>
-        SISTEM ONLINE: 29/07/2024
+        SISTEM ONLINE
     </div>
 </div>
 
@@ -94,7 +94,7 @@
 <div class="glass-card rounded-xl overflow-hidden">
     <div class="px-5 py-3.5 flex items-center justify-between border-b border-gray-100">
         <h3 class="text-base font-semibold text-gray-800">Riwayat Aktivitas Terbaru</h3>
-        <a href="#" class="text-primary text-sm font-semibold hover:underline">Lihat Semua →</a>
+        <a href="{{ route('petugas.activities.index') }}" class="text-primary text-sm font-semibold hover:underline">Lihat Semua →</a>
     </div>
     <div class="overflow-x-auto">
         <table class="w-full text-left min-w-[540px]">
