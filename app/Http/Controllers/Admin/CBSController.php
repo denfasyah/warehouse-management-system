@@ -66,11 +66,8 @@ class CBSController extends Controller
                     continue;
                 }
 
-                // Buat tugas untuk setiap lokasi asal yang tidak sesuai
+                // Buat tugas untuk setiap lokasi asal yang tidak sesuai kelasnya
                 foreach ($item->locations as $currentLoc) {
-                    if ($currentLoc->storage_class === 'general' || $currentLoc->is_bulk_zone) {
-                        continue; // Biarkan kalau sudah di BLK/General
-                    }
                     if ($currentLoc->storage_class !== $item->storage_class) {
                         $qtyToMove = $currentLoc->pivot->quantity;
 
