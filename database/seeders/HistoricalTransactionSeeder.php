@@ -42,68 +42,49 @@ class HistoricalTransactionSeeder extends Seeder
 
         $items = Item::all()->keyBy('name');
 
-        // Definisi frekuensi keluar (untuk membentuk skor CBS)
-        // qty: jumlah per transaksi keluar | days_per_week: berapa hari/minggu ada transaksi
-        $patterns = [
-            // --- FAST: qty besar, hampir setiap hari ---
-            'Engine Oil'     => ['min' => 150, 'max' => 400, 'days_per_week' => 7],
-            'Brake Fluid'    => ['min' => 80,  'max' => 200, 'days_per_week' => 5],
-            'Brake Pad'      => ['min' => 60,  'max' => 150, 'days_per_week' => 5],
-            // --- MEDIUM: qty sedang, beberapa hari per minggu ---
-            'Brake Disc'     => ['min' => 20,  'max' => 60,  'days_per_week' => 3],
-            'Gear Oil'       => ['min' => 15,  'max' => 50,  'days_per_week' => 3],
-            // --- SLOW: qty kecil, sangat jarang ---
-            'Transmisi Oil'  => ['min' => 2,   'max' => 8,   'days_per_week' => 1],
-            'Battery'        => ['min' => 3,   'max' => 10,  'days_per_week' => 1],
+        // Definisi target pergerakan 30 hari terakhir sesuai skripsi
+        $targets = [
+            'Engine Oil'     => 42150,
+            'Battery'        => 3250,
+            'Brake Pad'      => 2800,
+            'Transmisi Oil'  => 1950,
+            'Brake Fluid'    => 650,
+            'Brake Disc'     => 420,
+            'Gear Oil'       => 310,
         ];
 
-        $this->command->info('Membuat data historis transaksi 60 hari...');
-        $bar = $this->command->getOutput()->createProgressBar(60 * count($patterns));
+        $this->command->info('Membuat data historis transaksi 30 hari...');
 
-        // Semua insert dilakukan dalam 1 transaksi DB untuk performa
-        DB::transaction(function () use ($items, $patterns, $admin, $petugas, $bar) {
-            for ($daysAgo = 60; $daysAgo >= 0; $daysAgo--) {
-                $date      = Carbon::now()->subDays($daysAgo);
-                $dayOfWeek = (int) $date->dayOfWeek; // 0=Sun, 6=Sat
+        DB::transaction(function () use ($items, $targets, $admin, $petugas) {
+            foreach ($targets as $itemName => $targetQty) {
+                $item = $items->get($itemName);
+                if (!$item) {
+                    continue;
+                }
 
-                foreach ($patterns as $itemName => $pattern) {
-                    $bar->advance();
+                // Cari lokasi picking yang terkait dengan item (zona non-BLK)
+                $itemLocs  = DB::table('item_location')->where('item_id', $item->id)->pluck('location_id');
+                $pickingLoc = Location::whereIn('id', $itemLocs)
+                    ->where('zone', '!=', 'BLK')
+                    ->first();
 
-                    $item = $items->get($itemName);
-                    if (!$item) {
-                        continue;
-                    }
+                $locId = $pickingLoc?->id ?? Location::whereIn('id', $itemLocs)->first()?->id;
 
-                    // Tentukan apakah hari ini adalah hari aktif untuk item ini
-                    $isActiveDay = match(true) {
-                        $pattern['days_per_week'] >= 7 => true,
-                        $pattern['days_per_week'] >= 5 => !in_array($dayOfWeek, [0, 6]),      // skip weekend
-                        $pattern['days_per_week'] >= 3 => in_array($dayOfWeek, [1, 3, 5]),    // Sen, Rab, Jum
-                        $pattern['days_per_week'] >= 2 => in_array($dayOfWeek, [1, 4]),        // Sen, Kam
-                        default                        => $dayOfWeek === 2,                     // Selasa saja
-                    };
+                if (!$locId) {
+                    continue;
+                }
 
-                    if (!$isActiveDay) {
-                        continue;
-                    }
+                // Bagi targetQty menjadi 5 bagian agar sum-nya persis
+                $part = (int) floor($targetQty / 5);
+                $parts = [$part, $part, $part, $part, $targetQty - ($part * 4)];
 
-                    $qty = rand($pattern['min'], $pattern['max']);
+                $days = [2, 7, 12, 17, 24];
 
-                    // Cari lokasi picking yang terkait dengan item (zona non-BLK)
-                    $itemLocs  = DB::table('item_location')->where('item_id', $item->id)->pluck('location_id');
-                    $pickingLoc = Location::whereIn('id', $itemLocs)
-                        ->where('zone', '!=', 'BLK')
-                        ->first();
-
-                    $locId = $pickingLoc?->id ?? Location::whereIn('id', $itemLocs)->first()?->id;
-
-                    if (!$locId) {
-                        continue;
-                    }
+                foreach ($parts as $index => $qty) {
+                    $date = Carbon::now()->subDays($days[$index]);
 
                     // --- Catat Barang Keluar (Outgoing) ---
-                    // Status: approved → dihitung ke skor CBS
-                    $processedAt = $date->copy()->setTime(rand(13, 17), rand(0, 59));
+                    $processedAt = $date->copy()->setTime(14, rand(0, 59));
                     OutgoingGood::create([
                         'item_id'      => $item->id,
                         'requested_by' => $petugas->id,
@@ -111,30 +92,29 @@ class HistoricalTransactionSeeder extends Seeder
                         'location_id'  => $locId,
                         'quantity'     => $qty,
                         'status'       => 'approved',
-                        'destination'  => 'Distribusi rutin - data historis',
-                        'note'         => 'Data historis 60 hari',
-                        'requested_at' => $date->copy()->setTime(rand(9, 12), rand(0, 59)),
+                        'destination'  => 'Distribusi rutin - data historis skripsi',
+                        'note'         => 'Data historis 30 hari',
+                        'requested_at' => $date->copy()->setTime(9, rand(0, 59)),
                         'processed_at' => $processedAt,
-                        'created_at'   => $date->copy()->setTime(rand(9, 12), rand(0, 59)),
+                        'created_at'   => $date->copy()->setTime(9, rand(0, 59)),
                         'updated_at'   => $processedAt,
                     ]);
 
-                    // --- Catat Barang Masuk (Incoming) — pengisian ulang stok ---
-                    // Hanya sebagai catatan historis, tidak mengubah pivot/stok saat ini
+                    // --- Catat Barang Masuk (Incoming) ---
                     IncomingGood::create([
                         'item_id'    => $item->id,
                         'user_id'    => $petugas->id,
                         'location_id'=> $locId,
                         'quantity'   => $qty,
-                        'note'       => 'Penerimaan rutin - data historis',
-                        'created_at' => $date->copy()->setTime(rand(7, 9), rand(0, 59)),
-                        'updated_at' => $date->copy()->setTime(rand(7, 9), rand(0, 59)),
+                        'note'       => 'Penerimaan rutin - data historis skripsi',
+                        'created_at' => $date->copy()->setTime(8, rand(0, 59)),
+                        'updated_at' => $date->copy()->setTime(8, rand(0, 59)),
                     ]);
                 }
             }
         });
 
-        $bar->finish();
+
         $this->command->newLine();
         $this->command->info('Data historis berhasil dibuat. Menjalankan kalkulasi CBS...');
 

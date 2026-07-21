@@ -405,3 +405,44 @@ erDiagram
 
 Penjelasan Sintaksis Mermaid
 Deklarasi erDiagram mendefinisikan awal mula entitas relasi diagram. Nama entitas diikuti tanda kurung kurawal menyimpan daftar kolom yang dimiliki tabel tersebut. Tipe data ditulis lebih dulu diikuti nama kolom. Label PK berarti Primary Key sebagai kunci utama tabel sementara FK bermakna Foreign Key sebagai kunci referensi ke tabel lain. Teks nullable di dalam kutip ganda menandakan bahwa data tersebut boleh bernilai kosong. Garis dengan ujung ganda dan ujung menyerupai cakar burung melambangkan hubungan satu ke banyak antar entitas yang ditambahkan dengan label teks untuk menjelaskan nama kegiatan dari relasi tersebut
+
+---
+
+## 6. Tabel Pengujian Sistem (Testing Tables)
+
+Berikut adalah tabel pengujian fungsionalitas sistem (Black-box Testing) berdasarkan peran masing-masing aktor.
+
+### A. Tabel Pengujian Admin
+
+Tabel ini memuat skenario pengujian fungsionalitas yang dapat diakses dan dikelola oleh Admin.
+
+| No | Aksi | Menu | Pengujian yang diharapkan | Hasil |
+|----|------|------|---------------------------|-------|
+| 1  | Memasukkan email dan password admin | Login | Sistem membaca data karyawan tersebut sebagai admin dengan menampilkan fitur menu dashboard | Sesuai yang diharapkan |
+| 2  | Melihat total data barang, kategori, lokasi, kapasitas ruang gudang, serta grafik statistik barang masuk/keluar | Dashboard | Menampilkan total data dan visualisasi statistik gudang secara real-time | Sesuai yang diharapkan |
+| 3  | Menambahkan data pengguna baru (Admin/Petugas) | Kelola Pengguna | Sistem menambahkan data pengguna baru dan menyimpannya ke tabel `users` | Sesuai yang diharapkan |
+| 4  | Mengubah data pengguna dan mengganti kata sandi | Kelola Pengguna | Sistem mengupdate data pengguna bersangkutan di basis data | Sesuai yang diharapkan |
+| 5  | Menambahkan data kategori barang | Kelola Kategori | Kategori baru berhasil ditambahkan dan disimpan ke tabel `categories` | Sesuai yang diharapkan |
+| 6  | Menambahkan lokasi gudang baru beserta kapasitas maksimal berat (`max_weight`) dan volume (`max_volume`) | Kelola Lokasi | Sistem menyimpan lokasi rak baru dengan kapasitas ruang yang terukur | Sesuai yang diharapkan |
+| 7  | Menambahkan data barang baru lengkap dengan informasi barcode dan dimensi barang | Kelola Barang | Sistem menyimpan barang baru ke tabel `items` dan mengaitkannya dengan kategori | Sesuai yang diharapkan |
+| 8  | Menyetujui (Approve) pengajuan barang keluar dari petugas | Approval Transaksi | Status pengajuan berubah menjadi `approved`, stok di lokasi terkait berkurang, dan notifikasi terkirim | Sesuai yang diharapkan |
+| 9  | Menolak (Reject) pengajuan barang keluar dari petugas | Approval Transaksi | Status pengajuan berubah menjadi `rejected` tanpa memotong stok barang | Sesuai yang diharapkan |
+| 10 | Membuat tugas relokasi barang dan menugaskannya kepada petugas tertentu | Tugas Relokasi | Sistem menyimpan tugas relokasi dengan status `pending` di tabel `relocation_tasks` | Sesuai yang diharapkan |
+
+---
+
+### B. Tabel Pengujian Petugas
+
+Tabel ini memuat skenario pengujian fungsionalitas operasional gudang yang dilakukan oleh Petugas.
+
+| No | Aksi | Menu | Pengujian yang diharapkan | Hasil |
+|----|------|------|---------------------------|-------|
+| 1  | Memasukkan email dan password petugas | Login | Sistem membaca data karyawan tersebut sebagai petugas gudang dan menampilkan menu operasional gudang | Sesuai yang diharapkan |
+| 2  | Menginput barang masuk pada lokasi rak dengan kapasitas ruang (berat & volume) yang cukup | Barang Masuk | Stok barang di lokasi (`item_location`) bertambah dan riwayat barang masuk tersimpan | Sesuai yang diharapkan |
+| 3  | Menginput barang masuk pada lokasi rak yang sudah penuh atau melebihi batas kapasitas maksimal | Barang Masuk | Sistem menolak input barang dan menampilkan peringatan bahwa kapasitas lokasi tidak cukup | Sesuai yang diharapkan |
+| 4  | Mengisi dan mengirim form pengajuan pengeluaran barang | Barang Keluar | Transaksi barang keluar disimpan dengan status `pending` dan terkirim ke halaman persetujuan Admin | Sesuai yang diharapkan |
+| 5  | Melihat dan menyelesaikan tugas relokasi barang yang ditugaskan | Tugas Relokasi | Stok berpindah dari lokasi asal ke lokasi tujuan dan status tugas terupdate menjadi `completed` | Sesuai yang diharapkan |
+| 6  | Menyelesaikan tugas relokasi barang yang kapasitas lokasi tujuannya tidak muat | Tugas Relokasi | Sistem mengalokasikan stok sesuai batas maksimum lokasi tujuan dan mengarahkan sisanya ke Bulk Area (Overflow) | Sesuai yang diharapkan |
+| 7  | Memindai barcode barang menggunakan scanner kamera/alat pemindai | Barcode Scanner | Sistem mencocokkan kode barcode secara otomatis dan menampilkan detail informasi barang pada form terkait | Sesuai yang diharapkan |
+| 8  | Menerima pemberitahuan persetujuan transaksi atau tugas relokasi baru | Notifikasi | Notifikasi muncul di header aplikasi dan status berubah menjadi dibaca setelah diklik | Sesuai yang diharapkan |
+

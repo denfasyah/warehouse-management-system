@@ -22,7 +22,7 @@ class ScannerController extends Controller
             return response()->json(['success' => false, 'message' => 'Kode kosong.'], 400);
         }
 
-        $item = Item::with(['category', 'location'])
+        $item = Item::with(['category', 'locations'])
                     ->where('barcode', $code)
                     ->orWhere('sku', $code)
                     ->first();
@@ -41,7 +41,7 @@ class ScannerController extends Controller
                 'stock' => $item->stock,
                 'unit' => $item->unit,
                 'category_name' => $item->category->name ?? '-',
-                'location_code' => $item->location->code ?? '-',
+                'location_code' => $item->locations->pluck('code')->join(', ') ?: '-',
             ]
         ]);
     }

@@ -15,28 +15,7 @@ class CBSService
      */
     public static function recalculate(Item $item): void
     {
-        $fastThreshold   = (int) Setting::getValue('cbs_fast_threshold', 50);
-        $mediumThreshold = (int) Setting::getValue('cbs_medium_threshold', 10);
-
-        $thirtyDaysAgo = now()->subDays(30);
-
-        $frequencyScore = OutgoingGood::where('item_id', $item->id)
-            ->where('status', 'approved')
-            ->where('processed_at', '>=', $thirtyDaysAgo)
-            ->sum('quantity');
-
-        if ($frequencyScore >= $fastThreshold) {
-            $storageClass = 'fast';
-        } elseif ($frequencyScore >= $mediumThreshold) {
-            $storageClass = 'medium';
-        } else {
-            $storageClass = 'slow';
-        }
-
-        $item->update([
-            'frequency_score' => $frequencyScore,
-            'storage_class'   => $storageClass,
-        ]);
+        self::recalculateAll();
     }
 
     /**
@@ -44,33 +23,61 @@ class CBSService
      */
     public static function recalculateAll(): array
     {
-        $fastThreshold   = (int) Setting::getValue('cbs_fast_threshold', 50);
-        $mediumThreshold = (int) Setting::getValue('cbs_medium_threshold', 10);
+        $fastThreshold   = (int) Setting::getValue('cbs_fast_threshold', 82);
+        $mediumThreshold = (int) Setting::getValue('cbs_medium_threshold', 95);
 
         $thirtyDaysAgo = now()->subDays(30);
         $counts = ['fast' => 0, 'medium' => 0, 'slow' => 0];
 
         $items = Item::all();
+        
+        // 1. Hitung frequency score untuk semua item
         foreach ($items as $item) {
             $frequencyScore = OutgoingGood::where('item_id', $item->id)
                 ->where('status', 'approved')
                 ->where('processed_at', '>=', $thirtyDaysAgo)
                 ->sum('quantity');
+                
+            $item->frequency_score = (int) $frequencyScore;
+        }
 
-            if ($frequencyScore >= $fastThreshold) {
-                $storageClass = 'fast';
-            } elseif ($frequencyScore >= $mediumThreshold) {
-                $storageClass = 'medium';
+        // 2. Hitung total sales/pengeluaran seluruh item
+        $totalSales = $items->sum('frequency_score');
+
+        // 3. Urutkan item berdasarkan frequency score descending
+        $sortedItems = $items->sortByDesc('frequency_score');
+
+        // 4. Hitung kumulatif dan tentukan kelas
+        $cumulativeSales = 0;
+        foreach ($sortedItems as $item) {
+            if ($totalSales > 0) {
+                $cumulativeSales += $item->frequency_score;
+                $cumulativePercentage = ($cumulativeSales / $totalSales) * 100;
             } else {
+                $cumulativePercentage = 100; // default jika tidak ada pergerakan
+            }
+
+            if ($item->frequency_score == 0) {
+                // Sesuai prinsip CBS, jika tidak ada pergerakan sama sekali, dikategorikan sebagai slow
                 $storageClass = 'slow';
+            } else {
+                if ($cumulativePercentage <= $fastThreshold) {
+                    $storageClass = 'fast';
+                } elseif ($cumulativePercentage <= $mediumThreshold) {
+                    $storageClass = 'medium';
+                } else {
+                    $storageClass = 'slow';
+                }
             }
 
             $item->update([
-                'frequency_score' => $frequencyScore,
+                'frequency_score' => $item->frequency_score,
                 'storage_class'   => $storageClass,
             ]);
 
-            $counts[$storageClass]++;
+            if (isset($counts[$storageClass])) {
+                $counts[$storageClass]++;
+            }
         }
 
         return $counts;

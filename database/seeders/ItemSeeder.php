@@ -35,56 +35,49 @@ class ItemSeeder extends Seeder
             // ===== FAST MOVING (Zona A) =====
             [
                 'name'          => 'Engine Oil',
-                'stock'         => 6500,
+                'stock'         => 56293,
                 'storage_class' => 'fast',
-                // Picking: A-01 (2500) + A-02 (2500) | Overflow: BLK-01 (1500)
-                'locs'          => ['A-01' => 2500, 'A-02' => 2500, 'BLK-01' => 1500],
-            ],
-            [
-                'name'          => 'Brake Fluid',
-                'stock'         => 2200,
-                'storage_class' => 'fast',
-                // Muat di A-03 saja (< 2500)
-                'locs'          => ['A-03' => 2200],
-            ],
-            [
-                'name'          => 'Brake Pad',
-                'stock'         => 4800,
-                'storage_class' => 'fast',
-                // Picking: A-04 (2500) | Overflow: BLK-01 (2300)
-                'locs'          => ['A-04' => 2500, 'BLK-01' => 2300],
+                'locs'          => ['A-01' => 2500, 'A-02' => 2500, 'A-03' => 2500, 'A-04' => 2500, 'BLK-01' => 46293],
             ],
 
             // ===== MEDIUM MOVING (Zona B) =====
             [
-                'name'          => 'Brake Disc',
-                'stock'         => 2100,
+                'name'          => 'Battery',
+                'stock'         => 4821,
                 'storage_class' => 'medium',
-                // Muat di B-01 saja (< 2500)
-                'locs'          => ['B-01' => 2100],
+                'locs'          => ['B-01' => 2500, 'B-02' => 2321],
             ],
             [
-                'name'          => 'Gear Oil',
-                'stock'         => 1800,
+                'name'          => 'Brake Pad',
+                'stock'         => 4655,
                 'storage_class' => 'medium',
-                // Muat di B-02 saja (< 2500)
-                'locs'          => ['B-02' => 1800],
+                'locs'          => ['B-02' => 179, 'B-03' => 2500, 'B-04' => 1976],
             ],
 
             // ===== SLOW MOVING (Zona C) =====
             [
                 'name'          => 'Transmisi Oil',
-                'stock'         => 1400,
+                'stock'         => 3241,
                 'storage_class' => 'slow',
-                // Muat di C-01 saja (< 2500)
-                'locs'          => ['C-01' => 1400],
+                'locs'          => ['C-01' => 2500, 'C-02' => 741],
             ],
             [
-                'name'          => 'Battery',
-                'stock'         => 900,
+                'name'          => 'Brake Fluid',
+                'stock'         => 1044,
                 'storage_class' => 'slow',
-                // Muat di C-02 saja (< 2500)
-                'locs'          => ['C-02' => 900],
+                'locs'          => ['C-02' => 1044],
+            ],
+            [
+                'name'          => 'Brake Disc',
+                'stock'         => 967,
+                'storage_class' => 'slow',
+                'locs'          => ['C-03' => 967],
+            ],
+            [
+                'name'          => 'Gear Oil',
+                'stock'         => 624,
+                'storage_class' => 'slow',
+                'locs'          => ['C-03' => 624],
             ],
         ];
 
@@ -118,17 +111,8 @@ class ItemSeeder extends Seeder
                     continue;
                 }
 
-                // Pastikan qty tidak melebihi kapasitas rak (kecuali BLK)
-                $isBulk     = $loc->zone === 'BLK' || $loc->storage_class === 'general';
-                $locFillSoFar = DB::table('item_location')->where('location_id', $loc->id)->sum('quantity');
-                $maxQty     = $isBulk ? $qty : min($qty, $loc->capacity - $locFillSoFar);
-
-                if ($maxQty <= 0) {
-                    $this->command->warn("Rak {$code} sudah penuh saat seeding {$item->name}. Dilewati.");
-                    continue;
-                }
-
-                $attachData[$loc->id] = ['quantity' => $maxQty];
+                // Hubungkan secara pivot
+                $attachData[$loc->id] = ['quantity' => $qty];
             }
 
             if (!empty($attachData)) {

@@ -165,7 +165,7 @@
 
         <div class="sku-text">{{ $item->sku }}</div>
 
-        <div class="location">📍 Lokasi Rak: {{ $item->location->code }}</div>
+        <div class="location">📍 Lokasi Rak: {{ $item->locations->pluck('code')->join(', ') ?: 'Belum diatur' }}</div>
     </div>
 
     <script>

@@ -7,10 +7,10 @@ $kernel->bootstrap();
 
 use App\Models\Setting;
 
-Setting::updateOrCreate(['key' => 'cbs_fast_threshold'], ['value' => '500']);
-Setting::updateOrCreate(['key' => 'cbs_medium_threshold'], ['value' => '100']);
+Setting::updateOrCreate(['key' => 'cbs_fast_threshold'], ['value' => '82']);
+Setting::updateOrCreate(['key' => 'cbs_medium_threshold'], ['value' => '95']);
 
-echo "Thresholds updated: Fast >= 500, Medium >= 100, Slow < 100\n";
+echo "Thresholds updated: Fast <= 82%, Medium <= 95%, Slow > 95%\n";
 
 // Recalculate all
 $counts = App\Services\CBSService::recalculateAll();
