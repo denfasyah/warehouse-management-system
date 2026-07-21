@@ -34,8 +34,9 @@ class ItemController extends Controller
     public function create()
     {
         $categories = Category::where('is_active', true)->get();
-        // Hanya ambil lokasi yang aktif dan kapasitas belum penuh
+        // Hanya ambil lokasi Bulk (BLK) yang aktif dan kapasitas belum penuh
         $locations = Location::where('is_active', true)
+            ->where('zone', 'BLK')
             ->whereRaw('current_fill < capacity')
             ->get();
 
@@ -169,6 +170,11 @@ class ItemController extends Controller
     {
         if ($item->stock > 0) {
             return back()->with('error', 'Barang tidak dapat dihapus karena masih ada stok.');
+        }
+
+        // Cek riwayat transaksi (Mencegah error Foreign Key / 1451)
+        if ($item->incomingGoods()->exists() || $item->outgoingGoods()->exists()) {
+            return back()->with('error', 'Barang tidak dapat dihapus karena sudah memiliki riwayat transaksi (Barang Masuk / Barang Keluar).');
         }
 
         // Catat lokasi yang akan terdampak sebelum hapus

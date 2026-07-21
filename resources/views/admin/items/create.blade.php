@@ -63,15 +63,8 @@
 
             <!-- Kolom Kanan -->
             <div class="space-y-5">
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-1.5">Stok Awal <span class="text-red-500">*</span></label>
-                        <input type="number" name="stock" value="{{ old('stock', 0) }}" required min="0" class="w-full rounded-xl border-gray-300 focus:border-primary focus:ring focus:ring-primary/20 font-bold text-lg text-center">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-1.5">Satuan <span class="text-red-500">*</span></label>
-                        <input type="text" name="unit" value="{{ old('unit', 'Pcs') }}" required class="w-full rounded-xl border-gray-300 focus:border-primary focus:ring focus:ring-primary/20 uppercase">
-                    </div>
+                <div class="grid grid-cols-1 gap-4">
+                    <!-- Stok Awal dan Satuan dihapus (diinput oleh petugas saat barang masuk) -->
                 </div>
 
                 <div>

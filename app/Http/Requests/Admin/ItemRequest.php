@@ -36,8 +36,8 @@ class ItemRequest extends FormRequest
                 'max:100', 
                 Rule::unique('items')->ignore($itemId)
             ],
-            'unit' => ['required', 'string', 'max:20'],
-            'stock' => ['required', 'integer', 'min:0'],
+            'unit' => [$this->isMethod('post') ? 'nullable' : 'required', 'string', 'max:20'],
+            'stock' => [$this->isMethod('post') ? 'nullable' : 'required', 'integer', 'min:0'],
             'min_stock' => ['required', 'integer', 'min:0'],
             'description' => ['nullable', 'string', 'max:1000'],
         ];
@@ -63,6 +63,11 @@ class ItemRequest extends FormRequest
         // Auto-generate barcode if empty
         if (empty($this->barcode)) {
             $data['barcode'] = 'BC-' . strtoupper(Str::random(12));
+        }
+
+        // Set default stock for new items
+        if ($this->isMethod('post') && empty($this->stock)) {
+            $data['stock'] = 0;
         }
 
         if (!empty($data)) {
