@@ -86,8 +86,9 @@ class ApprovalController extends Controller
 
             DB::commit();
 
-            // Hitung ulang CBS untuk item ini karena ada barang keluar baru
-            \App\Services\CBSService::recalculate($item);
+            // CBS recalculation tidak dijalankan otomatis.
+            // Admin harus menekan tombol 'Jalankan Kalkulasi Sekarang' secara manual
+            // agar alur demo/skripsi sesuai: input data → approve → kalkulasi manual → lihat hasil.
 
             return back()->with('success', "Pengajuan barang keluar '{$item->name}' berhasil disetujui.");
 

@@ -47,26 +47,33 @@ class CBSService
         // 3. Urutkan item berdasarkan frequency score descending
         $sortedItems = $items->sortByDesc('frequency_score');
 
-        // 4. Hitung kumulatif dan tentukan kelas
-        $cumulativeSales = 0;
+        // 4. Hitung Persentase Penjualan, Persentase Kumulatif, dan Tentukan Kelas
+        $persentaseKumulatif = 0;
+        
         foreach ($sortedItems as $item) {
             if ($totalSales > 0) {
-                $cumulativeSales += $item->frequency_score;
-                $cumulativePercentage = ($cumulativeSales / $totalSales) * 100;
+                // Rumus: (Penjualan 30 hari / Total Penjualan Seluruh Barang) x 100%
+                $persentasePenjualan = ($item->frequency_score / $totalSales) * 100;
+                
+                // Rumus: Persentase Kumulatif Baris Sebelumnya + Persentase Penjualan Baris Sekarang
+                $persentaseKumulatif = $persentaseKumulatif + $persentasePenjualan;
             } else {
-                $cumulativePercentage = 100; // default jika tidak ada pergerakan
+                $persentasePenjualan = 0;
+                $persentaseKumulatif = 100; // default jika tidak ada pergerakan sama sekali
             }
 
             if ($item->frequency_score == 0) {
-                // Sesuai prinsip CBS, jika tidak ada pergerakan sama sekali, dikategorikan sebagai slow
+                // Jika barang tidak memiliki penjualan/pengeluaran sama sekali, otomatis masuk kelas Slow/C
                 $storageClass = 'slow';
             } else {
-                if ($cumulativePercentage <= $fastThreshold) {
-                    $storageClass = 'fast';
-                } elseif ($cumulativePercentage <= $mediumThreshold) {
-                    $storageClass = 'medium';
+                // Rumus: = IF(Persentase Kumulatif <= 82%; A; IF(Persentase Kumulatif <= 95%; B; C))
+                // (Menggunakan threshold dinamis dari admin, default: 82% dan 95%)
+                if ($persentaseKumulatif <= $fastThreshold) {
+                    $storageClass = 'fast'; // Kelas A
+                } elseif ($persentaseKumulatif <= $mediumThreshold) {
+                    $storageClass = 'medium'; // Kelas B
                 } else {
-                    $storageClass = 'slow';
+                    $storageClass = 'slow'; // Kelas C
                 }
             }
 

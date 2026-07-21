@@ -15,13 +15,14 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        require_once __DIR__ . '/ThesisItemSeeder.php';
+        
         $this->call([
             UserSeeder::class,
             CategorySeeder::class,
             LocationSeeder::class,
-            ItemSeeder::class,
             SettingSeeder::class,
-            HistoricalTransactionSeeder::class,
+            ThesisItemSeeder::class,
         ]);
     }
 }
